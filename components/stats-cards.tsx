@@ -14,7 +14,7 @@ export function StatsCards() {
   const [botRunning, setBotRunning] = useState(false)
   const [loading, setLoading] = useState(false)
 
-  // Lee el estado real del bot desde el backend (bot-runner.ts)
+  // Estado real del bot (desde backend)
   const refreshStatus = async () => {
     try {
       const r = await fetch("/api/bot/status", { cache: "no-store" })
@@ -26,7 +26,7 @@ export function StatsCards() {
 
   useEffect(() => {
     refreshStatus()
-    const id = setInterval(refreshStatus, 3000) // poll cada 3s
+    const id = setInterval(refreshStatus, 3000)
     return () => clearInterval(id)
   }, [])
 
@@ -38,7 +38,7 @@ export function StatsCards() {
     setLoading(true)
     try {
       if (!botRunning) {
-        // START real del proceso Python
+        // START real
         const res = await fetch("/api/bot/start", { method: "POST" })
         const data = await res.json().catch(() => ({}))
         if (res.ok && data?.ok) {
@@ -47,7 +47,7 @@ export function StatsCards() {
           alert(`Error al iniciar: ${data?.error ?? res.status}`)
         }
       } else {
-        // STOP real (SIGINT -> fallback SIGKILL)
+        // STOP real
         const res = await fetch("/api/bot/stop", { method: "POST" })
         const data = await res.json().catch(() => ({}))
         if (res.ok && data?.ok) {
@@ -61,7 +61,6 @@ export function StatsCards() {
       alert("Error al controlar el bot")
     } finally {
       setLoading(false)
-      // refrescamos el estado por las dudas
       setTimeout(refreshStatus, 500)
     }
   }
@@ -112,6 +111,7 @@ export function StatsCards() {
                 {/* Center Column - START/STOP */}
                 <div className="flex flex-col items-center justify-center space-y-4">
                   <button
+                    type="button"
                     onClick={handleBotToggle}
                     disabled={loading || !formData.apiKey || !formData.apiSecret}
                     className={`px-8 py-4 rounded-lg font-mono text-lg font-bold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed ${

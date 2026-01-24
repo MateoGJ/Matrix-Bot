@@ -4,10 +4,10 @@ import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 
 export function HeroSection() {
-  const [glitchText, setGlitchText] = useState("Maximiza tus ganancias con la mejor tecnología")
+  const [glitchText, setGlitchText] = useState("Generá plata con la mejor tecnología")
 
   useEffect(() => {
-    const originalText = "Maximiza tus ganancias con la mejor tecnología"
+    const originalText = "Generá plata con la mejor tecnología"
     const glitchChars = "!@#$%^&*()_+-=[]{}|;:,.<>?"
 
     const glitchInterval = setInterval(() => {
@@ -20,7 +20,7 @@ export function HeroSection() {
 
         setTimeout(() => setGlitchText(originalText), 100)
       }
-    }, 2000)
+    }, 111)
 
     return () => clearInterval(glitchInterval)
   }, [])
@@ -35,10 +35,10 @@ export function HeroSection() {
             </span>
           </h1>
           <p className="text-xl md:text-2xl text-gray-300 mb-8 font-mono">
-            {">"} Mejores rendimientos minimizando pérdidas
+            {">"} Rendimientos sin pérdidas
           </p>
           <p className="text-lg text-gray-400 mb-12 font-mono opacity-80">
-            Bot de trading automatizado con IA avanzada
+            Bot de trading automatizado
           </p>
         </div>
 

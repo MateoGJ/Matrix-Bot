@@ -436,7 +436,7 @@ def crear_orden(simbolo, porcentaje_cuenta, apalancamiento, direccion, monto_fij
 pp_configurations = {
     "tendencial": {"nivel_roi_inicial": 111, "incremento_nivel_roi": 111, "primer_ajuste_sl": 0, "incremento_sl_post": 111},
     "moderada": {"nivel_roi_inicial": 111, "incremento_nivel_roi": 111, "primer_ajuste_sl": 61, "incremento_sl_post": 111},
-    "conservadora": {"nivel_roi_inicial": 11, "incremento_nivel_roi": 11, "primer_ajuste_sl": 11, "incremento_sl_post": 11},
+    "conservadora": {"nivel_roi_inicial": 40, "incremento_nivel_roi": 40, "primer_ajuste_sl": 31, "incremento_sl_post": 31},
 }
 
 
@@ -447,7 +447,7 @@ pp_por_tf = {
 }
 
 sl_por_tf = {
-    "1m": 111,  # Stop Loss más apretado si es señal de 1m
+    "1m": 33,  # Stop Loss más apretado si es señal de 1m
     "5m": 55   # Stop Loss normal si es señal de 5m
 }
 
@@ -864,8 +864,8 @@ def calcular_indicadores(df):
 def señal_ema_macd_adx(symbol):
     """
     Detecta señales LONG o SHORT basadas en cruces de EMA (fast vs slow),
-    confirmadas por MACD o ADX. Filtra por spread, atr, trades_24h y volumen_24h.
-    El filtro ema_diff queda comentado para poder reactivarlo si se desea.
+    confirmadas por MACD o ADX. Filtra por spread, ATR, trades_24h, volumen_24h
+    y ema_diff (activado para evitar momentum bajista extremo).
     """
 
     # --- Asegurar 1m como tf de confirmación ---
@@ -882,30 +882,35 @@ def señal_ema_macd_adx(symbol):
     dfs = {tf: calcular_indicadores(klines_live[symbol][tf]) for tf in tf_operativos}
     df1 = dfs.get("1m")
     l1 = df1.iloc[-1] if df1 is not None else None
+    if df1 is None or l1 is None:
+        return None, None, None, None
 
     # --------------------
-    # FILTROS DE CONTEXTO (afinados)
+    # FILTROS DE CONTEXTO (endurecidos)
     # --------------------
-    # RANGOS derivados del análisis de días 4–7:
-    SPREAD_MIN = 0.00002
+    SPREAD_MIN = 0.00003
     SPREAD_MAX = 0.00009
-    ATR_MIN    = 0.00021
-    ATR_MAX    = 0.00041
-    TRADES_MAX = 160_000
-    VOL24H_MAX = 15_000_000  # en USDT
+    ATR_MIN    = 0.00018
+    ATR_MAX    = 0.00033
+    TRADES_MAX = 90_000
+    VOL24H_MIN = 2_000_000    # USDT
+    VOL24H_MAX = 6_000_000    # USDT
+    EMA_DIFF_MIN = -0.001     # exigir ema_100 - ema_200 >= -0.001
 
     filtros = {
         "spread": False,
-        # "ema_diff": False,  # <-- seguimos sin usarlo a propósito
         "atr": False,
         "trades_24h": False,
-        "volumen_24h": False
+        "volumen_24h": False,
+        "ema_diff": False
     }
 
     try:
         # --- Ticker y orderbook ---
         ticker = client.futures_ticker(symbol=symbol)
-        vol_24h_usdt = float(ticker.get("volume", 0)) * float(ticker.get("lastPrice", 0))
+        last_price = float(ticker.get("lastPrice", 0))
+        base_volume = float(ticker.get("volume", 0))
+        vol_24h_usdt = base_volume * last_price
         trades_24h   = int(ticker.get("count", 0))
 
         orderbook = client.futures_order_book(symbol=symbol, limit=5)
@@ -915,30 +920,32 @@ def señal_ema_macd_adx(symbol):
         # --- ATR rápido en 1m (promedio de high-low últimas 14) ---
         atr = df1['high'].tail(14).subtract(df1['low'].tail(14)).mean()
 
-        # --- Opcional: diff de EMAs de tendencia (no activado) ---
-        # ema_diff_actual = l1.ema_100 - l1.ema_200
+        # --- ema_diff activado ---
+        ema_diff_actual = float(l1.ema_100 - l1.ema_200)
 
         # -------------------
         # Evaluación de filtros
         # -------------------
-        if (SPREAD_MIN < spread < SPREAD_MAX):
+        if SPREAD_MIN < spread < SPREAD_MAX:
             filtros["spread"] = True
 
-        if (ATR_MIN <= atr <= ATR_MAX):
+        if ATR_MIN <= atr <= ATR_MAX:
             filtros["atr"] = True
 
         if trades_24h <= TRADES_MAX:
             filtros["trades_24h"] = True
 
-        if vol_24h_usdt <= VOL24H_MAX:
+        if VOL24H_MIN <= vol_24h_usdt <= VOL24H_MAX:
             filtros["volumen_24h"] = True
+
+        if ema_diff_actual >= EMA_DIFF_MIN:
+            filtros["ema_diff"] = True
 
         # --- Log de filtros ---
         total_ok = sum(filtros.values())
         status = ["✅" if v else "❌" for v in filtros.values()]
         nombres = list(filtros.keys())
-        resumen = f"🔍 {symbol} | Filtros cumplidos: {total_ok}/{len(filtros)} -> "
-        resumen += " | ".join([f"{n}: {s}" for n, s in zip(nombres, status)])
+        resumen = f"🔍 {symbol} | Filtros: {total_ok}/{len(filtros)} -> " + " | ".join([f"{n}: {s}" for n, s in zip(nombres, status)])
         print(resumen)
 
         if total_ok < len(filtros):
@@ -962,17 +969,13 @@ def señal_ema_macd_adx(symbol):
         tendencia_alcista = (l.ema_100 > l.ema_200) and (l.close > l.ema_100)
         tendencia_bajista = (l.ema_100 < l.ema_200) and (l.close < l.ema_100)
 
-        if df1 is not None:
-            macd_diff = float(l1.macd - l1.macd_signal)
-            macd_hist = float(l1.macd_hist)
-            adx_val   = float(l1.adx)
+        macd_diff = float(l1.macd - l1.macd_signal)
+        macd_hist = float(l1.macd_hist)
+        adx_val   = float(l1.adx)
 
-            confirma_macd_l = (macd_diff > 0) or (macd_hist > 0)
-            confirma_macd_s = (macd_diff < 0) or (macd_hist < 0)
-            confirma_adx    = adx_val > 20
-        else:
-            confirma_macd_l = confirma_macd_s = confirma_adx = False
-            macd_diff = 0; adx_val = 0
+        confirma_macd_l = (macd_diff > 0) or (macd_hist > 0)
+        confirma_macd_s = (macd_diff < 0) or (macd_hist < 0)
+        confirma_adx    = adx_val > 20
 
         if cross_long and tendencia_alcista and (confirma_macd_l or confirma_adx):
             return "l", tf, ("MACD" if confirma_macd_l else "ADX"), round(macd_diff if confirma_macd_l else adx_val, 8)
@@ -999,15 +1002,14 @@ def obtener_sesion_actual_utc(now=None):
     else:
         return "NY"
 
-def segundos_hasta_fin_de_asia(now=None):
+def segundos_hasta_fin_de_ny(now=None):
     """
-    Devuelve los segundos hasta las 07:00 UTC (fin de ASIA).
-    Si ya pasaron las 07:00, calcula el fin de ASIA del día siguiente.
+    Devuelve los segundos hasta las 00:00 UTC (fin de NY).
+    Si ya pasaron las 00:00 (o sea, no estamos en NY), calcula la siguiente medianoche.
     """
     now = now or datetime.utcnow()
-    end = now.replace(hour=7, minute=0, second=0, microsecond=0)
-    if now >= end:
-        end = (now + timedelta(days=1)).replace(hour=7, minute=0, second=0, microsecond=0)
+    # Fin de NY es 00:00 UTC del día siguiente
+    end = (now + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
     return max(1, int((end - now).total_seconds()))
 
 
@@ -1030,13 +1032,15 @@ def reinicializar_cliente():
 # Lista de símbolos a excluir (ejemplo: mercados con precios muy altos)
 EXCEPTION_MARKETS = ["PAXGUSDT", "SXTUSDT", "BTCUSDT", "ETHUSDT", "BNBUSDT"]  # Agrega aquí los símbolos que querés filtrar
 
-# === Límites compartidos por ambas funciones ===
-SPREAD_MIN = 0.00002
+# === Límites compartidos por ambas funciones (endurecidos) ===
+# Basado en tu análisis: recortar extremos y ruido
+SPREAD_MIN = 0.00003
 SPREAD_MAX = 0.00009
-ATR_MIN    = 0.00021
-ATR_MAX    = 0.00041
-TRADES_MAX = 160_000
-VOL24H_MAX = 15_000_000  # USDT
+ATR_MIN    = 0.00018
+ATR_MAX    = 0.00033
+TRADES_MAX = 90_000
+VOL24H_MIN = 2_000_000       # nuevo: evitar mercados anémicos
+VOL24H_MAX = 6_000_000       # nuevo: evitar sobrecalentados
 
 
 def obtener_mercados_filtrados(debug=True):
@@ -1046,7 +1050,7 @@ def obtener_mercados_filtrados(debug=True):
       - SPREAD_MIN < spread < SPREAD_MAX     (order book)
       - ATR_MIN <= ATR <= ATR_MAX            (1m, promedio de high-low últimas 14)
       - trades_24h <= TRADES_MAX             (ticker 'count')
-      - vol_24h_usdt <= VOL24H_MAX           (ticker volume * lastPrice)
+      - VOL24H_MIN <= vol_24h_usdt <= VOL24H_MAX  (ticker volume * lastPrice)
     """
     try:
         # 1) Lista de PERPETUAL-USDT
@@ -1073,12 +1077,12 @@ def obtener_mercados_filtrados(debug=True):
                 vol_24h_usdt   = base_volume * last_price
                 trades_24h     = int(t.get("count", 0) or 0)
 
-                # trades / vol (mismo criterio que señal)
+                # trades / vol (criterio endurecido)
                 if trades_24h > TRADES_MAX:
                     if debug: print(f"❌ {sym} descartado por trades_24h ({trades_24h} > {TRADES_MAX})")
                     continue
-                if vol_24h_usdt > VOL24H_MAX:
-                    if debug: print(f"❌ {sym} descartado por volumen_24h ({vol_24h_usdt:.2f} > {VOL24H_MAX})")
+                if not (VOL24H_MIN <= vol_24h_usdt <= VOL24H_MAX):
+                    if debug: print(f"❌ {sym} descartado por volumen_24h ({vol_24h_usdt:.2f} fuera de {VOL24H_MIN}–{VOL24H_MAX})")
                     continue
 
                 # --- spread (order book) ---
@@ -1116,10 +1120,6 @@ def obtener_mercados_filtrados(debug=True):
         return []
 
 
-
-
-
-
 def obtener_posiciones_abiertas():
     try:
         posiciones = client.futures_position_information()
@@ -1133,8 +1133,9 @@ def obtener_posiciones_abiertas():
         print(f"⚠️ Error al obtener posiciones abiertas: {e}")
         return []
 
+
 # -------------------------
-# Lógica principal de balance dinámico (la podés dejar igual, ya usa las funciones anteriores)
+# Lógica principal de balance dinámico (igual que antes)
 # -------------------------
 def verificar_y_transferir_balance():
     global monto_fijo_transferencia, max_balance_deseado, umbral_transferencia, incremento_retiro, incremento_carga
@@ -1185,20 +1186,15 @@ def debug_time_sync():
 ## --- Bloque principal ---
 if __name__ == "__main__":
     # Parámetros iniciales
-    porcentaje_cuenta         = 11 #float(input("Ingresa el porcentaje de tu cuenta para usar en cada operación (ej. 5 para 5%): "))
+    porcentaje_cuenta         = 11  # %
     apalaX                    = 99997777   # temporal
     tp_porcentaje             = 99997777   # temporal
     sl_porcentaje             = 88.88
     pp_activado               = "si"
-    max_balance_deseado       = 11 #float(input("Después de cuánto retirar? (ej. 10 USDT): "))
-    monto_fijo_transferencia  = 1 #float(input("¿Cuánto transferir si se queda sin dinero? (ej. 5 USDT): "))
+    max_balance_deseado       = 11
+    monto_fijo_transferencia  = 1
 
-    # print("\n🧭 Elige los timeframes a usar:")
-    # print("1 - Solo 1m")
-    # print("2 - Solo 5m")
-    # print("3 - Ambos (1m y 5m)")
-    opcion_tf = "1" #input("Selecciona una opción (1, 2 o 3): ").strip()
-
+    opcion_tf = "1"  # "1": 1m | "2": 5m | "3": ambos
     if opcion_tf == "1":
         timeframes_usados = ["1m"]
     elif opcion_tf == "2":
@@ -1219,6 +1215,20 @@ if __name__ == "__main__":
 
     while True:
         try:
+            # 0️⃣ Control de sesión: PAUSAR en NY (en vez de ASIA)
+            sesion_actual = obtener_sesion_actual_utc()
+            if sesion_actual == "NY":
+                secs = segundos_hasta_fin_de_ny()
+                mins = max(1, secs // 60)
+                msg = f"⏸️ Sesión NY detectada. Pausando hasta ASIA. Reintento en ~{mins} min."
+                print(msg)
+                try:
+                    enviar_notificacion_telegram(msg, tipo=1)
+                except Exception:
+                    pass
+                time.sleep(secs)
+                continue
+
             # 1️⃣ Balance y recarga si hace falta
             verificar_y_transferir_balance()
 
@@ -1227,8 +1237,8 @@ if __name__ == "__main__":
             nuevos_simbolos = obtener_mercados_filtrados(debug=True)
 
             if not nuevos_simbolos:
-                print("⚠️ No se encontraron mercados válidos. Esperando 10 minutos...\n")
-                time.sleep(1111)
+                print("⚠️ No se encontraron mercados válidos. Esperando ~10 minutos...\n")
+                time.sleep(600)
                 continue
 
             print(f"\n📈 Mercados filtrados: {', '.join(nuevos_simbolos)}")
@@ -1242,9 +1252,13 @@ if __name__ == "__main__":
             # 4️⃣ Actualizar lista actual
             simbolos_filtrados = nuevos_simbolos
 
-            # 5️⃣ Monitorear durante 10 minutos
+            # 5️⃣ Monitorear durante ~10 minutos
             tiempo_inicio = time.time()
-            while time.time() - tiempo_inicio < 1111:
+            while time.time() - tiempo_inicio < 600:
+                # Chequeo rápido por si justo cambia a NY en medio del ciclo
+                if obtener_sesion_actual_utc() == "NY":
+                    print("⏸️ Cambio a NY detectado durante monitoreo. Pausando ciclo actual.")
+                    break
                 monitorear_mercados(simbolos_filtrados)
                 time.sleep(1)  # Frecuencia de chequeo
 

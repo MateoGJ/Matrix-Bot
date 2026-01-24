@@ -51,10 +51,10 @@ export default function BotConsole({ botRunning }: { botRunning?: boolean }) {
     termRef.current?.scrollTo({ top: termRef.current.scrollHeight });
   }, [logs]);
 
-  const start = async () => {
-    await fetch("/api/bot/start", { method: "POST" });
-    fetchStatus();
-  };
+  // const start = async () => {
+  //   await fetch("/api/bot/start", { method: "POST" });
+  //   fetchStatus();
+  // };
   const stop = async () => {
     await fetch("/api/bot/stop", { method: "POST" });
     setTimeout(fetchStatus, 600);
@@ -82,7 +82,7 @@ export default function BotConsole({ botRunning }: { botRunning?: boolean }) {
 
           <div className="flex gap-2">
             <Button
-              onClick={start}
+              // onClick={start}
               disabled={status?.running}
               className="bg-green-600/30 hover:bg-green-600/40 border border-green-500/30"
             >

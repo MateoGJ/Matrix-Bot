@@ -2,54 +2,71 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { getRecentOperations, type Operation } from "@/lib/bot-api"
+import {
+  getRecentOperations,
+  type Operation,
+  type BotId,
+} from "@/lib/bot-api"
+
+const BOTS: { id: BotId; label: string }[] = [
+  { id: "sniper", label: "SNIPER" },
+  { id: "machinegun", label: "MACHINE GUN" },
+  { id: "tanque", label: "TANQUE" },
+]
 
 export function OperationsTable() {
+  const [selectedBot, setSelectedBot] = useState<BotId>("sniper")
   const [filter, setFilter] = useState("")
   const [operations, setOperations] = useState<Operation[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    let mounted = true
+
     const loadOperations = async () => {
+      setLoading(true)
       try {
-        const realOperations = await getRecentOperations(50)
-        setOperations(realOperations)
+        const ops = await getRecentOperations(selectedBot, 500)
+        if (mounted) setOperations(ops)
       } catch (error) {
-        console.error("[v0] Error loading operations:", error)
-        // Keep empty array if database fails
-        setOperations([])
+        console.error("Error loading operations:", error)
+        if (mounted) setOperations([])
       } finally {
-        setLoading(false)
+        if (mounted) setLoading(false)
       }
     }
 
     loadOperations()
-
-    // Refresh operations every 10 seconds
     const interval = setInterval(loadOperations, 10000)
-    return () => clearInterval(interval)
-  }, [])
 
-  const filteredOperations = operations.filter((op) => filter === "" || op.fecha.includes(filter))
+    return () => {
+      mounted = false
+      clearInterval(interval)
+    }
+  }, [selectedBot])
+
+  const filteredOperations = operations.filter(
+    op => filter === "" || op.fecha.includes(filter),
+  )
 
   const totalPnl = operations.reduce((sum, op) => sum + op.pnl, 0)
 
   const formatDuration = (seconds: number) => {
-    const hours = Math.floor(seconds / 3600)
-    const minutes = Math.floor((seconds % 3600) / 60)
-    const secs = seconds % 60
-    return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`
+    const h = Math.floor(seconds / 3600)
+    const m = Math.floor((seconds % 3600) / 60)
+    const s = seconds % 60
+    return `${h.toString().padStart(2, "0")}:${m
+      .toString()
+      .padStart(2, "0")}:${s.toString().padStart(2, "0")}`
   }
 
   if (loading) {
     return (
-      <section id="operations" className="py-16 px-4">
+      <section className="py-16 px-4">
         <div className="container mx-auto">
-          <div className="bg-gradient-to-br from-white/10 to-gray-100/5 border border-white/20 rounded-lg backdrop-blur-sm p-8">
-            <div className="animate-pulse">
-              <div className="h-8 bg-white/10 rounded mb-4"></div>
-              <div className="h-64 bg-white/5 rounded"></div>
-            </div>
+          <div className="bg-black/40 border border-white/20 rounded-lg p-8 animate-pulse">
+            <div className="h-8 bg-white/10 rounded mb-4" />
+            <div className="h-64 bg-white/5 rounded" />
           </div>
         </div>
       </section>
@@ -59,102 +76,162 @@ export function OperationsTable() {
   return (
     <section id="operations" className="py-16 px-4">
       <div className="container mx-auto">
-        <div className="bg-gradient-to-br from-white/10 to-gray-100/5 border border-white/20 rounded-lg backdrop-blur-sm overflow-hidden">
+        <div className="bg-gradient-to-br from-white/10 to-gray-100/5 border border-white/20 rounded-lg overflow-hidden">
+          {/* HEADER */}
           <div className="border-b border-white/20 p-6">
-            <h2 className="text-3xl font-bold font-mono mb-6">
-              <span className="bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-                {">"} Operaciones del Bot
-              </span>
-            </h2>
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <h2 className="text-3xl font-bold font-mono">
+                <span className="bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+                  {">"} Operaciones
+                </span>
+              </h2>
 
-            <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-              <div className="flex items-center gap-4">
-                <span className="text-gray-300 font-mono">Total PNL:</span>
-                <span className={`font-bold font-mono text-xl ${totalPnl >= 0 ? "text-green-400" : "text-red-400"}`}>
+              {/* BOT SELECTOR */}
+              <div className="flex gap-2">
+                {BOTS.map(bot => (
+                  <Button
+                    key={bot.id}
+                    size="sm"
+                    onClick={() => setSelectedBot(bot.id)}
+                    className={`font-mono border ${
+                      selectedBot === bot.id
+                        ? "bg-white/20 border-white text-white"
+                        : "bg-black/40 border-white/20 text-gray-400 hover:text-white"
+                    }`}
+                  >
+                    {bot.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* STATS ROW */}
+            <div className="mt-6 flex flex-wrap items-center gap-6">
+              <span className="text-gray-300 font-mono">
+                PNL Total:
+                <span
+                  className={`ml-2 font-bold ${
+                    totalPnl >= 0 ? "text-green-400" : "text-red-400"
+                  }`}
+                >
                   {totalPnl.toFixed(2)} USDT
                 </span>
-                <span className="text-gray-300 font-mono ml-6">Total de Operaciones:</span>
-                <span className="text-white font-bold font-mono text-xl">{operations.length}</span>
-              </div>
+              </span>
 
-              <div className="flex items-center gap-4">
-                <span className="text-gray-300 font-mono">Filtrar por fecha:</span>
+              <span className="text-gray-300 font-mono">
+                Operaciones:
+                <span className="ml-2 text-white font-bold">
+                  {operations.length}
+                </span>
+              </span>
+
+              <div className="flex items-center gap-2">
                 <input
                   type="text"
                   placeholder="dd/mm/aaaa"
                   value={filter}
-                  onChange={(e) => setFilter(e.target.value)}
-                  className="bg-black/50 border border-white/30 rounded px-3 py-2 text-white font-mono focus:border-white/60 focus:outline-none"
+                  onChange={e => setFilter(e.target.value)}
+                  className="bg-black/50 border border-white/30 rounded px-3 py-2 text-white font-mono"
                 />
                 <Button
                   size="sm"
                   onClick={() => setFilter("")}
-                  className="bg-gradient-to-r from-white/20 to-gray-300/20 hover:from-white/30 hover:to-gray-300/30 text-white font-bold border border-white/30"
+                  className="bg-white/10 border border-white/30 font-mono"
                 >
-                  Limpiar Filtro
+                  Limpiar
                 </Button>
               </div>
             </div>
           </div>
 
-          <div className="overflow-x-auto">
+          {/* TABLE */}
+          <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
             <table className="w-full">
-              <thead>
+              <thead className="sticky top-0 bg-black/70">
                 <tr className="border-b border-white/10">
-                  <th className="text-left p-4 text-gray-300 font-mono text-sm uppercase tracking-wider">ID</th>
-                  <th className="text-left p-4 text-gray-300 font-mono text-sm uppercase tracking-wider">Mercado</th>
-                  <th className="text-left p-4 text-gray-300 font-mono text-sm uppercase tracking-wider">Margen</th>
-                  <th className="text-left p-4 text-gray-300 font-mono text-sm uppercase tracking-wider">APLX</th>
-                  <th className="text-left p-4 text-gray-300 font-mono text-sm uppercase tracking-wider">Tipo</th>
-                  <th className="text-left p-4 text-gray-300 font-mono text-sm uppercase tracking-wider">Resultado</th>
-                  <th className="text-left p-4 text-gray-300 font-mono text-sm uppercase tracking-wider">PNL</th>
-                  <th className="text-left p-4 text-gray-300 font-mono text-sm uppercase tracking-wider">Fecha</th>
-                  <th className="text-left p-4 text-gray-300 font-mono text-sm uppercase tracking-wider">Duración</th>
+                  {[
+                    "ID",
+                    "Mercado",
+                    "Margen",
+                    "APLX",
+                    "Tipo",
+                    "Resultado",
+                    "PNL",
+                    "Fecha",
+                    "Duración",
+                  ].map(h => (
+                    <th
+                      key={h}
+                      className="p-4 text-left text-gray-300 font-mono text-xs uppercase"
+                    >
+                      {h}
+                    </th>
+                  ))}
                 </tr>
               </thead>
+
               <tbody>
-                {filteredOperations.map((op) => (
-                  <tr key={op.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                    <td className="p-4 text-white font-mono">{op.id}</td>
-                    <td className="p-4 text-gray-200 font-mono">{op.simbolo}</td>
-                    <td className="p-4 text-gray-200 font-mono">{op.margen.toFixed(2)} USDT</td>
-                    <td className="p-4 text-white font-mono">{op.apalancamiento}x</td>
+                {filteredOperations.map(op => (
+                  <tr
+                    key={op.id}
+                    className="border-b border-white/5 hover:bg-white/5"
+                  >
+                    <td className="p-4 font-mono">{op.id}</td>
+                    <td className="p-4 font-mono">{op.simbolo}</td>
+                    <td className="p-4 font-mono">
+                      {op.margen.toFixed(2)} USDT
+                    </td>
+                    <td className="p-4 font-mono">{op.apalancamiento}x</td>
                     <td className="p-4 font-mono">
                       <span
                         className={`px-2 py-1 rounded text-xs font-bold ${
                           op.tipo_operacion === "BUY"
-                            ? "bg-green-500/20 text-green-400 border border-green-500/30"
-                            : "bg-red-500/20 text-red-400 border border-red-500/30"
+                            ? "bg-green-500/20 text-green-400"
+                            : "bg-red-500/20 text-red-400"
                         }`}
                       >
                         {op.tipo_operacion}
                       </span>
                     </td>
                     <td className="p-4 font-mono">
-                      <span className={op.resultado < 0 ? "text-red-400" : "text-green-400"}>
+                      <span
+                        className={
+                          op.resultado >= 0
+                            ? "text-green-400"
+                            : "text-red-400"
+                        }
+                      >
                         {op.resultado.toFixed(2)}%
                       </span>
                     </td>
                     <td className="p-4 font-mono">
-                      <span className={op.pnl < 0 ? "text-red-400" : "text-green-400"}>{op.pnl.toFixed(2)} USDT</span>
+                      <span
+                        className={
+                          op.pnl >= 0
+                            ? "text-green-400"
+                            : "text-red-400"
+                        }
+                      >
+                        {op.pnl.toFixed(2)} USDT
+                      </span>
                     </td>
-                    <td className="p-4 text-gray-200 font-mono text-sm">
+                    <td className="p-4 font-mono text-sm">
                       {new Date(op.fecha).toLocaleString("es-ES")}
                     </td>
-                    <td className="p-4 text-white font-mono text-sm">{formatDuration(op.duracion)}</td>
+                    <td className="p-4 font-mono text-sm">
+                      {formatDuration(op.duracion)}
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-
-            {filteredOperations.length === 0 && (
-              <div className="text-center py-8 text-gray-400 font-mono">
-                {operations.length === 0
-                  ? "No hay operaciones registradas"
-                  : "No se encontraron operaciones con ese filtro"}
-              </div>
-            )}
           </div>
+
+          {filteredOperations.length === 0 && (
+            <div className="text-center py-8 text-gray-400 font-mono">
+              No hay operaciones para este bot
+            </div>
+          )}
         </div>
       </div>
     </section>
