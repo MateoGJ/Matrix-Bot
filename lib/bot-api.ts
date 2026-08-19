@@ -20,28 +20,33 @@ const pool = mysql.createPool({
 // =========================
 // BOTS
 // =========================
-export type BotId = "sniper" | "machinegun" | "tanque"
+export type BotId = "sniper" | "machinegun" | "tanque" | "browning"
 
 const BOTS = {
   sniper: {
     apiKey: "MoAcsgKcNJFW1oXGqnKHm9sgn4iIMXtiDkdohXyjhdwevXQMEl9zTVXrOKYEefIp",
     apiSecret: "bBnH4g7LsLyN93cm38pWAsmTw8XNmV2HPXTpoCN4MmUZ66LxczHKpCt0H1FCQchW",
-    table: "MK202",
+    table: "Burocrata1",
   },
   "machinegun": {
     apiKey: "7Hkxsg0nNxO5aBYClzs5k2BMZQ7PMbJf8ZW4t2RqDPLTwMbpBXFQagEFTpKnz2al",
     apiSecret: "ZFzoNo471lXwMehZijOUnUqxR3PE12uRCGw1vu4HLZzVUewPusWIc9xPdgG6Qldj",
-    table: "MK_MG",
+    table: "MK_MG_12",
   },
   "tanque": {
     apiKey: "0Nr1Yk7r2zqdkN5HoYuNYAT2IMTnPzWYBoMIoeoYzX8W5SusxXvmyexsXL4G1A0w",
     apiSecret: "vumco848539uqrRNW3rFeBZB0mDBb0AYJHAZ7fbuQ8tDLnIIDr9VJSsStWrdxCwp",
     table: "T1122",
   },
+  "browning": {
+    apiKey: "1lbsvvyaB4p8fLpFKgGFjOnjGO2tsj3ZpJmGPoQXS83p2SKBF8ghOXo82f6LGfnR",
+    apiSecret: "g07920rFuu4bFyL0VKwJRBx716PRL2h0O8Uf9H6xaAw7Kx4jjWd17b9tPsDrkSNp",
+    table: "T2211",
+  },
 } as const
 
 function isValidBotId(value: any): value is BotId {
-  return value === "sniper" || value === "machinegun" || value === "tanque"
+  return value === "sniper" || value === "machinegun" || value === "tanque" || value === "browning"
 }
 
 function getBot(botId: any) {
@@ -229,7 +234,7 @@ export async function getDailyPnl(
     `
     SELECT 
       DAY(fecha) AS day,
-      SUM(resultado) AS daily_pnl
+      SUM(pnl) AS daily_pnl
     FROM ${bot.table}
     WHERE YEAR(fecha) = ? AND MONTH(fecha) = ?
     GROUP BY DAY(fecha)
@@ -245,6 +250,41 @@ export async function getDailyPnl(
   return out
 }
 
+
+export interface MonthlyStats {
+  year: number
+  month: number
+  pnl: number
+  roi: number
+  operations: number
+}
+
+export async function getMonthlyStats(
+  botId: BotId,
+): Promise<MonthlyStats[]> {
+  const bot = getBot(botId)
+
+  const [rows] = await pool.query(
+    `
+    SELECT
+      YEAR(fecha) AS year,
+      MONTH(fecha) AS month,
+      COUNT(*) AS operations,
+      SUM(pnl) AS total_pnl
+    FROM ${bot.table}
+    GROUP BY YEAR(fecha), MONTH(fecha)
+    ORDER BY YEAR(fecha) DESC, MONTH(fecha) DESC
+    `
+  )
+
+  return (rows as any[]).map(row => ({
+    year: Number(row.year),
+    month: Number(row.month),
+    operations: Number(row.operations),
+    pnl: Number(row.total_pnl ?? 0),
+    roi: Number(row.total_pnl ?? 0) * 100,
+  }))
+}
 
 // =========================
 // MOCK BOT COMMANDS

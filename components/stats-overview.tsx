@@ -7,6 +7,7 @@ const BOTS = [
   { id: "sniper", name: "SNIPER", img: "/bots/SNPR.jpg" },
   { id: "machinegun", name: "MACHINE GUN", img: "/bots/MG.png" },
   { id: "tanque", name: "TANQUE", img: "/bots/TNQ.webp" },
+  { id: "browning", name: "BROWNING", img: "/bots/BRWN.jfif" },
 ] as const
 
 export function StatsOverview() {
@@ -14,6 +15,7 @@ export function StatsOverview() {
     sniper: null,
     machinegun: null,
     tanque: null,
+    browning: null,
   })
 
   useEffect(() => {
@@ -30,7 +32,7 @@ export function StatsOverview() {
   }, [])
 
   // =========================
-  // TOTAL PNL (SUMA DE LOS 3)
+  // TOTAL PNL (SUMA DE LOS 4)
   // =========================
   const totalPnl = useMemo(() => {
     return Object.values(data).reduce((acc, s) => {
@@ -48,8 +50,8 @@ export function StatsOverview() {
           GLOBAL PNL CARD
       ========================= */}
       <div className="bg-gradient-to-br from-white/10 to-gray-100/5 border border-white/20 rounded-xl p-6 text-center">
-        <p className="text-xs text-gray-400 uppercase tracking-widest">
-          PNL TOTAL SISTEMA
+        <p className="text-s text-gray-400 uppercase tracking-widest">
+          PNL TOTAL 
         </p>
         <p
           className={`mt-2 font-mono text-3xl ${

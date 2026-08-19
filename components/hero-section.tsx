@@ -35,10 +35,10 @@ export function HeroSection() {
             </span>
           </h1>
           <p className="text-xl md:text-2xl text-gray-300 mb-8 font-mono">
-            {">"} Rendimientos sin pérdidas
+            {">"} Bot de trading automatizado
           </p>
           <p className="text-lg text-gray-400 mb-12 font-mono opacity-80">
-            Bot de trading automatizado
+            Rendimientos sin pérdidas
           </p>
         </div>
 

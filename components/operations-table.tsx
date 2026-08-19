@@ -12,19 +12,19 @@ const BOTS: { id: BotId; label: string }[] = [
   { id: "sniper", label: "SNIPER" },
   { id: "machinegun", label: "MACHINE GUN" },
   { id: "tanque", label: "TANQUE" },
+  { id: "browning", label: "BROWNING" }
 ]
 
 export function OperationsTable() {
   const [selectedBot, setSelectedBot] = useState<BotId>("sniper")
   const [filter, setFilter] = useState("")
   const [operations, setOperations] = useState<Operation[]>([])
-  const [loading, setLoading] = useState(true)
+  const [initialLoading, setInitialLoading] = useState(true)
 
   useEffect(() => {
     let mounted = true
 
     const loadOperations = async () => {
-      setLoading(true)
       try {
         const ops = await getRecentOperations(selectedBot, 500)
         if (mounted) setOperations(ops)
@@ -32,7 +32,7 @@ export function OperationsTable() {
         console.error("Error loading operations:", error)
         if (mounted) setOperations([])
       } finally {
-        if (mounted) setLoading(false)
+        if (mounted) setInitialLoading(false)
       }
     }
 
@@ -60,7 +60,8 @@ export function OperationsTable() {
       .padStart(2, "0")}:${s.toString().padStart(2, "0")}`
   }
 
-  if (loading) {
+  // 🔹 SOLO carga inicial
+  if (initialLoading) {
     return (
       <section className="py-16 px-4">
         <div className="container mx-auto">
@@ -92,7 +93,10 @@ export function OperationsTable() {
                   <Button
                     key={bot.id}
                     size="sm"
-                    onClick={() => setSelectedBot(bot.id)}
+                    onClick={() => {
+                      setSelectedBot(bot.id)
+                      setInitialLoading(true)
+                    }}
                     className={`font-mono border ${
                       selectedBot === bot.id
                         ? "bg-white/20 border-white text-white"
@@ -105,7 +109,7 @@ export function OperationsTable() {
               </div>
             </div>
 
-            {/* STATS ROW */}
+            {/* STATS */}
             <div className="mt-6 flex flex-wrap items-center gap-6">
               <span className="text-gray-300 font-mono">
                 PNL Total:
@@ -207,9 +211,7 @@ export function OperationsTable() {
                     <td className="p-4 font-mono">
                       <span
                         className={
-                          op.pnl >= 0
-                            ? "text-green-400"
-                            : "text-red-400"
+                          op.pnl >= 0 ? "text-green-400" : "text-red-400"
                         }
                       >
                         {op.pnl.toFixed(2)} USDT

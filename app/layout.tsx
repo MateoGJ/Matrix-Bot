@@ -17,7 +17,10 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata = {
   title: "MyRoboTrader - Bot de Trading Crypto Matrix Style",
   description: "Bot de trading automatizado con IA avanzada para maximizar ganancias en criptomonedas",
-    generator: 'v0.app'
+    generator: 'v0.app',
+  icons: {
+      icon: "/images/dollar.jpg",
+    },
 }
 
 export default function RootLayout({

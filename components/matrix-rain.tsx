@@ -15,7 +15,7 @@ export function MatrixRain() {
     canvas.width = window.innerWidth
     canvas.height = window.innerHeight
 
-    const currencySymbols = "$€$¥$£$₿$₹$₽$₩$₪$₨$₦$₡$₴$₸$₵$₲$₱$₫$₭$₯$₰$₳$₴$₵$₶$₷$₸$₹$₺$₻$₼$₽$₾$₿"
+    const currencySymbols = "$€$₿¥$₿£$₿₿$₹$₽$₿₩$₿₪$₨$₿₿₦$₡$₿₴$₸₿$₿₵$₲₿$₿₱$₫₿$₭$₯$₰₿$₳$₴$₿₵$₶$₷₿$₸₿₿$₹$₿₺$₻₿$₼₿$₽$₾$₿"
     const symbolsArray = currencySymbols.split("")
 
     const fontSize = 24
