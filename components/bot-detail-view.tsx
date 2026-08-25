@@ -118,8 +118,8 @@ export function BotDetailView({ bot }: { bot: BotSummary }) {
                 <span className={`text-sm font-bold ${trade.tipo === "BUY" ? "text-green-400" : "text-red-400"}`}>
                   {trade.tipo}
                 </span>
-                <span className="text-sm font-bold text-pink-500">{trade.apalancamiento}</span>
                 <span className="text-sm font-bold text-white">{trade.symbol}</span>
+                <span className="text-sm font-bold text-pink-500">{trade.apalancamiento}</span>
               </div>
               
               <div className="flex justify-between items-center text-xs">
