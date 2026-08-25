@@ -63,6 +63,7 @@ export interface ActiveTrade {
   margen: number
   pnlPct: number
   pnlActual: number
+  apalancamiento: number
   estadoProteccion: "SL" | "PP"
   slInicial: number
   pnlSl: number
@@ -136,6 +137,7 @@ export async function getFleetStats(): Promise<BotSummary[]> {
           estadoProteccion: opActiva.estado_proteccion || "SL",
           slInicial: config.sl_porcentaje || 55,
           pnlSl: opActiva.pnl_sl || 0,
+          apalancamiento: opActiva.apalancamiento || 10,
           // 👇 ACÁ LEEMOS TUS NUEVAS VARIABLES DEL MONDONGO
           roiProtegido: opActiva.porcentaje_protegido_actual || opActiva.porcentaje_protegido || 0,
           pnlAsegurado: opActiva.pnl_asegurado_usdt || opActiva.pnl_asegurado || 0,

@@ -85,7 +85,7 @@ export function BotDetailView({ bot }: { bot: BotSummary }) {
           </h3>
           <div className="space-y-4">
             <div>
-              <span className="text-[10px] text-purple-600 block uppercase tracking-widest mb-1">Experimento Activo</span>
+              <span className="text-[10px] text-purple-600 block uppercase tracking-widest mb-1">Experimento Activo:</span>
               <span className="text-sm font-bold text-cyan-400">{experimentName}</span>
             </div>
             <div>
@@ -118,6 +118,7 @@ export function BotDetailView({ bot }: { bot: BotSummary }) {
                 <span className={`text-sm font-bold ${trade.tipo === "BUY" ? "text-green-400" : "text-red-400"}`}>
                   {trade.tipo}
                 </span>
+                <span className="text-sm font-bold text-pink-500">{trade.apalancamiento}</span>
                 <span className="text-sm font-bold text-white">{trade.symbol}</span>
               </div>
               
