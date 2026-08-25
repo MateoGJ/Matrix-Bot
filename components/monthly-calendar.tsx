@@ -1,15 +1,14 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
-import { 
-  getDailyPnl, 
-  getMonthlyStats, 
+import {
+  getDailyPnl,
+  getMonthlyStats,
   getBotStats,
-  type BotId, 
+  type BotId,
   type MonthlyStats,
-  type Stats
+  type Stats,
 } from "@/lib/bot-api"
-import { Button } from "@/components/ui/button"
 import { 
   AreaChart, 
   Area, 
@@ -20,13 +19,6 @@ import {
   ResponsiveContainer,
   ReferenceLine
 } from "recharts"
-
-const BOTS: { id: BotId; label: string }[] = [
-  { id: "sniper", label: "SNIPER" },
-  { id: "machinegun", label: "MACHINE GUN" },
-  { id: "tanque", label: "TANQUE" },
-  { id: "browning", label: "BROWNING" }
-]
 
 const monthNames = [
   "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -39,7 +31,7 @@ const dayNames = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"]
 const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     const val = payload[0].value
-    const isProfit = val >= 1
+    const isProfit = val >= 0
     return (
       <div className={`p-3 rounded-lg border backdrop-blur-md shadow-2xl transition-all ${
         isProfit 
@@ -57,11 +49,9 @@ const CustomTooltip = ({ active, payload }: any) => {
   return null
 }
 
-export function MonthlyCalendar() {
+export function MonthlyCalendar({ botId }: { botId: BotId }) {
   const [isMounted, setIsMounted] = useState(false)
   const now = new Date()
-
-  const [selectedBot, setSelectedBot] = useState<BotId>("sniper")
   const [currentMonth, setCurrentMonth] = useState(now.getMonth() + 1)
   const [currentYear, setCurrentYear] = useState(now.getFullYear())
   
@@ -83,7 +73,7 @@ export function MonthlyCalendar() {
     const loadDailyPnl = async () => {
       setLoadingDaily(true)
       try {
-        const data = await getDailyPnl(selectedBot, currentYear, currentMonth)
+        const data = await getDailyPnl(botId, currentYear, currentMonth)
         setDailyPnl(data)
       } catch (error) {
         console.error("Error loading daily PNL:", error)
@@ -93,7 +83,7 @@ export function MonthlyCalendar() {
       }
     }
     loadDailyPnl()
-  }, [selectedBot, currentMonth, currentYear, isMounted])
+  }, [botId, currentMonth, currentYear, isMounted])
 
   // Carga global
   useEffect(() => {
@@ -102,8 +92,8 @@ export function MonthlyCalendar() {
       setLoadingGlobal(true)
       try {
         const [mStats, bStats] = await Promise.all([
-          getMonthlyStats(selectedBot),
-          getBotStats(selectedBot)
+          getMonthlyStats(botId),
+          getBotStats(botId)
         ])
         setMonthlyStats(mStats)
         setBotStats(bStats)
@@ -114,26 +104,24 @@ export function MonthlyCalendar() {
       }
     }
     loadGlobalStats()
-  }, [selectedBot, isMounted])
+  }, [botId, isMounted])
 
   // Cálculos de calendario
   const daysInMonth = new Date(currentYear, currentMonth, 0).getDate()
   const firstDayOfMonth = new Date(currentYear, currentMonth - 1, 1).getDay()
 
-  // Cálculos de Stats
-  const avgROI = monthlyStats.length > 0
-    ? monthlyStats.reduce((sum, m) => sum + m.roi, 0) / monthlyStats.length
+  // Métricas derivadas únicamente de datos reales de TiDB.
+  const avgPnlPerOperation = botStats && botStats.totalOperations > 0
+    ? botStats.totalPnl / botStats.totalOperations
     : 0
-
-  const totalROI = botStats ? botStats.totalPnl * 100 : 0
 
   // Cálculo de la Equity Curve
   const chartData = useMemo(() => {
     if (!monthlyStats.length) return []
     
     const reversed = [...monthlyStats].reverse()
-    let equity = 1 
-    const data = [{ name: "Inicio", equity: 1 }]
+    let equity = 0
+    const data = [{ name: "Inicio", equity: 0 }]
     
     reversed.forEach(stat => {
       equity += stat.pnl
@@ -146,16 +134,16 @@ export function MonthlyCalendar() {
     return data
   }, [monthlyStats])
 
-  // 🔥 MAGIA: Calculamos exactamente dónde está la línea del 1$ en porcentaje
+  // Calculamos dónde está la línea de break-even (0 USDT)
   const gradientOffset = useMemo(() => {
     if (!chartData.length) return 0
     const dataMax = Math.max(...chartData.map((i) => i.equity))
     const dataMin = Math.min(...chartData.map((i) => i.equity))
 
-    if (dataMax <= 1) return 0 // Todo pérdida (todo rojo)
-    if (dataMin >= 1) return 1 // Todo ganancia (todo verde)
+    if (dataMax <= 0) return 0 // Todo pérdida (todo rojo)
+    if (dataMin >= 0) return 1 // Todo ganancia (todo verde)
 
-    return (dataMax - 1) / (dataMax - dataMin)
+    return (dataMax) / (dataMax - dataMin)
   }, [chartData])
 
   const renderCalendarDays = () => {
@@ -216,22 +204,8 @@ export function MonthlyCalendar() {
                 </span>
               </h2>
 
-              {/* BOT SELECTOR */}
-              <div className="flex gap-2 bg-black/30 p-1 rounded-lg border border-white/10">
-                {BOTS.map(bot => (
-                  <Button
-                    key={bot.id}
-                    size="sm"
-                    onClick={() => setSelectedBot(bot.id)}
-                    className={`font-mono border transition-all ${
-                      selectedBot === bot.id
-                        ? "bg-white/20 border-white text-white shadow-[0_0_15px_rgba(255,255,255,0.2)]"
-                        : "bg-transparent border-transparent text-gray-400 hover:text-white"
-                    }`}
-                  >
-                    {bot.label}
-                  </Button>
-                ))}
+              <div className="text-xs text-gray-500 font-mono uppercase tracking-widest">
+                BOT: <span className="text-white">{botId}</span>
               </div>
             </div>
           </div>
@@ -352,8 +326,8 @@ export function MonthlyCalendar() {
                         <p className={`font-mono font-bold ${stat.pnl >= 0 ? "text-green-400" : "text-red-400"}`}>
                           {stat.pnl >= 0 ? "+" : ""}{stat.pnl.toFixed(2)} USDT
                         </p>
-                        <p className={`font-mono text-xs mt-1 px-2 py-0.5 rounded inline-block ${stat.roi >= 0 ? "bg-green-500/20 text-green-300" : "bg-red-500/20 text-red-300"}`}>
-                          ROI: {stat.roi >= 0 ? "+" : ""}{stat.roi.toFixed(2)}%
+                        <p className={`font-mono text-xs mt-1 px-2 py-0.5 rounded inline-block ${stat.pnl >= 0 ? "bg-green-500/20 text-green-300" : "bg-red-500/20 text-red-300"}`}>
+                          PNL / OP: {stat.operations > 0 ? (stat.pnl / stat.operations).toFixed(2) : "0.00"} USDT
                         </p>
                       </div>
                     </div>
@@ -383,21 +357,21 @@ export function MonthlyCalendar() {
                   </p>
                 </div>
 
-                {/* ROI Total */}
+                {/* PNL / Operación */}
                 <div className="bg-white/5 border border-white/10 rounded-lg p-4 relative overflow-hidden group">
-                  <div className={`absolute inset-0 opacity-10 transition-opacity group-hover:opacity-20 ${totalROI >= 0 ? 'bg-cyan-500' : 'bg-red-500'}`} />
-                  <p className="text-gray-400 font-mono text-sm">ROI Total</p>
-                  <p className={`text-2xl font-bold font-mono mt-2 ${totalROI >= 0 ? 'text-cyan-400' : 'text-red-400'}`}>
-                    {totalROI >= 0 ? '+' : ''}{totalROI.toFixed(2)}%
+                  <div className={`absolute inset-0 opacity-10 transition-opacity group-hover:opacity-20 ${avgPnlPerOperation >= 0 ? 'bg-cyan-500' : 'bg-red-500'}`} />
+                  <p className="text-gray-400 font-mono text-sm">PNL / Operación</p>
+                  <p className={`text-2xl font-bold font-mono mt-2 ${avgPnlPerOperation >= 0 ? 'text-cyan-400' : 'text-red-400'}`}>
+                    {avgPnlPerOperation >= 0 ? '+' : ''}{avgPnlPerOperation.toFixed(2)}
                   </p>
                 </div>
 
-                {/* Avg ROI */}
+                {/* Meses registrados */}
                 <div className="bg-white/5 border border-white/10 rounded-lg p-4 relative overflow-hidden group">
-                  <div className={`absolute inset-0 opacity-10 transition-opacity group-hover:opacity-20 ${avgROI >= 0 ? 'bg-blue-500' : 'bg-red-500'}`} />
-                  <p className="text-gray-400 font-mono text-sm">ROI Promedio (Mes)</p>
-                  <p className={`text-2xl font-bold font-mono mt-2 ${avgROI >= 0 ? 'text-blue-400' : 'text-red-400'}`}>
-                    {avgROI >= 0 ? '+' : ''}{avgROI.toFixed(2)}%
+                  <div className="absolute inset-0 opacity-10 transition-opacity group-hover:opacity-20 bg-blue-500" />
+                  <p className="text-gray-400 font-mono text-sm">Meses Registrados</p>
+                  <p className="text-2xl font-bold font-mono mt-2 text-blue-400">
+                    {monthlyStats.length}
                   </p>
                 </div>
 
@@ -463,7 +437,7 @@ export function MonthlyCalendar() {
                       fontSize={12} 
                       tickLine={false} 
                       axisLine={false} 
-                      tickFormatter={(val) => `$${val.toFixed(2)}`}
+                      tickFormatter={(val) => `${val >= 0 ? '+' : ''}$${val.toFixed(2)}`}
                       fontFamily="monospace"
                       width={60}
                     />
@@ -473,7 +447,7 @@ export function MonthlyCalendar() {
                     />
                     
                     <ReferenceLine 
-                      y={1} 
+                      y={0} 
                       stroke="#ef4444" 
                       strokeWidth={2} 
                       strokeDasharray="4 4" 
@@ -487,7 +461,7 @@ export function MonthlyCalendar() {
                       stroke="#a855f7"
                       strokeWidth={3}
                       fill="url(#splitColor)"
-                      baseValue={1}
+                      baseValue={0}
                       dot={{ fill: '#000', stroke: '#a855f7', strokeWidth: 2, r: 4 }}
                       activeDot={{ r: 6, fill: '#fff', stroke: '#a855f7', strokeWidth: 2 }}
                     />

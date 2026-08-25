@@ -1,38 +1,30 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import {
-  getRecentOperations,
-  type Operation,
-  type BotId,
-} from "@/lib/bot-api"
+import { getRecentOperations } from "@/lib/bot-api"
 
-const BOTS: { id: BotId; label: string }[] = [
-  { id: "sniper", label: "SNIPER" },
-  { id: "machinegun", label: "MACHINE GUN" },
-  { id: "tanque", label: "TANQUE" },
-  { id: "browning", label: "BROWNING" }
-]
+interface OperationsTableProps {
+  botId?: string
+}
 
-export function OperationsTable() {
-  const [selectedBot, setSelectedBot] = useState<BotId>("sniper")
+export function OperationsTable({ botId }: OperationsTableProps) {
   const [filter, setFilter] = useState("")
-  const [operations, setOperations] = useState<Operation[]>([])
-  const [initialLoading, setInitialLoading] = useState(true)
+  const [operations, setOperations] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     let mounted = true
 
     const loadOperations = async () => {
+      if (!botId) return
       try {
-        const ops = await getRecentOperations(selectedBot, 500)
-        if (mounted) setOperations(ops)
+        const ops = await getRecentOperations(botId, 500)
+        if (mounted) setOperations(ops || [])
       } catch (error) {
-        console.error("Error loading operations:", error)
+        console.error("Error cargando operaciones:", error)
         if (mounted) setOperations([])
       } finally {
-        if (mounted) setInitialLoading(false)
+        if (mounted) setLoading(false)
       }
     }
 
@@ -43,199 +35,99 @@ export function OperationsTable() {
       mounted = false
       clearInterval(interval)
     }
-  }, [selectedBot])
+  }, [botId])
 
   const filteredOperations = operations.filter(
-    op => filter === "" || op.fecha.includes(filter),
+    (op) =>
+      op.simbolo?.toLowerCase().includes(filter.toLowerCase()) ||
+      op.tipo_operacion?.toLowerCase().includes(filter.toLowerCase())
   )
 
-  const totalPnl = operations.reduce((sum, op) => sum + op.pnl, 0)
-
-  const formatDuration = (seconds: number) => {
-    const h = Math.floor(seconds / 3600)
-    const m = Math.floor((seconds % 3600) / 60)
-    const s = seconds % 60
-    return `${h.toString().padStart(2, "0")}:${m
-      .toString()
-      .padStart(2, "0")}:${s.toString().padStart(2, "0")}`
-  }
-
-  // 🔹 SOLO carga inicial
-  if (initialLoading) {
-    return (
-      <section className="py-16 px-4">
-        <div className="container mx-auto">
-          <div className="bg-black/40 border border-white/20 rounded-lg p-8 animate-pulse">
-            <div className="h-8 bg-white/10 rounded mb-4" />
-            <div className="h-64 bg-white/5 rounded" />
-          </div>
-        </div>
-      </section>
-    )
-  }
-
   return (
-    <section id="operations" className="py-16 px-4">
-      <div className="container mx-auto">
-        <div className="bg-gradient-to-br from-white/10 to-gray-100/5 border border-white/20 rounded-lg overflow-hidden">
-          {/* HEADER */}
-          <div className="border-b border-white/20 p-6">
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-              <h2 className="text-3xl font-bold font-mono">
-                <span className="bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-                  {">"} Operaciones
-                </span>
-              </h2>
+    <div className="space-y-4 font-mono">
+      <div className="bg-black/60 border border-white/10 rounded-lg p-5">
+        <div className="flex flex-wrap justify-between items-center gap-4 mb-4">
+          <h3 className="text-xs font-bold text-indigo-400 uppercase tracking-wider">
+            HISTORIAL DE OPERACIONES - {botId?.toUpperCase()}
+          </h3>
+          <input
+            type="text"
+            placeholder="Filtrar por símbolo o tipo..."
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            className="bg-black/50 border border-white/20 rounded px-3 py-1 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-green-400"
+          />
+        </div>
 
-              {/* BOT SELECTOR */}
-              <div className="flex gap-2">
-                {BOTS.map(bot => (
-                  <Button
-                    key={bot.id}
-                    size="sm"
-                    onClick={() => {
-                      setSelectedBot(bot.id)
-                      setInitialLoading(true)
-                    }}
-                    className={`font-mono border ${
-                      selectedBot === bot.id
-                        ? "bg-white/20 border-white text-white"
-                        : "bg-black/40 border-white/20 text-gray-400 hover:text-white"
-                    }`}
-                  >
-                    {bot.label}
-                  </Button>
-                ))}
-              </div>
-            </div>
-
-            {/* STATS */}
-            <div className="mt-6 flex flex-wrap items-center gap-6">
-              <span className="text-gray-300 font-mono">
-                PNL Total:
-                <span
-                  className={`ml-2 font-bold ${
-                    totalPnl >= 0 ? "text-green-400" : "text-red-400"
-                  }`}
-                >
-                  {totalPnl.toFixed(2)} USDT
-                </span>
-              </span>
-
-              <span className="text-gray-300 font-mono">
-                Operaciones:
-                <span className="ml-2 text-white font-bold">
-                  {operations.length}
-                </span>
-              </span>
-
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  placeholder="dd/mm/aaaa"
-                  value={filter}
-                  onChange={e => setFilter(e.target.value)}
-                  className="bg-black/50 border border-white/30 rounded px-3 py-2 text-white font-mono"
-                />
-                <Button
-                  size="sm"
-                  onClick={() => setFilter("")}
-                  className="bg-white/10 border border-white/30 font-mono"
-                >
-                  Limpiar
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {/* TABLE */}
-          <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
-            <table className="w-full">
-              <thead className="sticky top-0 bg-black/70">
-                <tr className="border-b border-white/10">
-                  {[
-                    "ID",
-                    "Mercado",
-                    "Margen",
-                    "APLX",
-                    "Tipo",
-                    "Resultado",
-                    "PNL",
-                    "Fecha",
-                    "Duración",
-                  ].map(h => (
-                    <th
-                      key={h}
-                      className="p-4 text-left text-gray-300 font-mono text-xs uppercase"
-                    >
-                      {h}
-                    </th>
-                  ))}
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs border-collapse">
+            <thead>
+              {/* 👈 ACÁ ESTÁN LAS 7 COLUMNAS QUE PEDISTE EXACTAS */}
+              <tr className="border-b-2 border-white/10 text-pink-400 uppercase tracking-wider">
+                <th className="p-3">Símbolo</th>
+                <th className="p-3">Tipo</th>
+                <th className="p-3">Apalancamiento</th>
+                <th className="p-3">Margen</th>
+                <th className="p-3">Resultado</th>
+                <th className="p-3">PnL</th>
+                <th className="p-3">Fecha</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan={7} className="text-center py-8 text-gray-500 font-bold uppercase tracking-widest">
+                    Cargando operaciones de la base de datos...
+                  </td>
                 </tr>
-              </thead>
-
-              <tbody>
-                {filteredOperations.map(op => (
+              ) : filteredOperations.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="text-center py-8 text-gray-500 font-bold uppercase tracking-widest border border-dashed border-white/5 rounded">
+                    No hay operaciones registradas para este bot.
+                  </td>
+                </tr>
+              ) : (
+                filteredOperations.map((op, idx) => (
                   <tr
-                    key={op.id}
-                    className="border-b border-white/5 hover:bg-white/5"
+                    key={op.id || idx}
+                    className="border-b-2 border-white/14 hover:bg-white/5 transition-colors"
                   >
-                    <td className="p-4 font-mono">{op.id}</td>
-                    <td className="p-4 font-mono">{op.simbolo}</td>
-                    <td className="p-4 font-mono">
-                      {op.margen.toFixed(2)} USDT
-                    </td>
-                    <td className="p-4 font-mono">{op.apalancamiento}x</td>
-                    <td className="p-4 font-mono">
+                    <td className="p-3 font-bold text-white">{op.simbolo}</td>
+                    <td className="p-3">
                       <span
-                        className={`px-2 py-1 rounded text-xs font-bold ${
-                          op.tipo_operacion === "BUY"
-                            ? "bg-green-500/20 text-green-400"
-                            : "bg-red-500/20 text-red-400"
+                        className={`font-bold ${
+                          op.tipo_operacion === "BUY" || op.tipo_operacion === "LONG"
+                            ? "text-green-400"
+                            : "text-red-400"
                         }`}
                       >
                         {op.tipo_operacion}
                       </span>
                     </td>
-                    <td className="p-4 font-mono">
-                      <span
-                        className={
-                          op.resultado >= 0
-                            ? "text-green-400"
-                            : "text-red-400"
-                        }
-                      >
-                        {op.resultado.toFixed(2)}%
+                    <td className="p-3 text-lime-400 font-bold">{op.apalancamiento}x</td>
+                    <td className="p-3 text-teal-300 font-bold">${Number(op.margen).toFixed(2)}</td>
+                    <td className="p-3 font-bold">
+                      <span className={Number(op.resultado) >= 0 ? "text-green-400" : "text-red-400"}>
+                        {Number(op.resultado) >= 0 ? "+" : ""}
+                        {Number(op.resultado).toFixed(2)}%
                       </span>
                     </td>
-                    <td className="p-4 font-mono">
-                      <span
-                        className={
-                          op.pnl >= 0 ? "text-green-400" : "text-red-400"
-                        }
-                      >
-                        {op.pnl.toFixed(2)} USDT
+                    <td className="p-3 font-bold">
+                      <span className={Number(op.pnl) >= 0 ? "text-green-400" : "text-red-400"}>
+                        {Number(op.pnl) >= 0 ? "+" : ""}
+                        {Number(op.pnl).toFixed(2)} USDT
                       </span>
                     </td>
-                    <td className="p-4 font-mono text-sm">
-                      {new Date(op.fecha).toLocaleString("es-ES")}
-                    </td>
-                    <td className="p-4 font-mono text-sm">
-                      {formatDuration(op.duracion)}
+                    <td className="p-3 text-amber-500">
+                      {op.fecha ? new Date(op.fecha).toLocaleString("es-AR", { day: '2-digit', month: '2-digit', hour: '2-digit', minute:'2-digit' }) : "-"}
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {filteredOperations.length === 0 && (
-            <div className="text-center py-8 text-gray-400 font-mono">
-              No hay operaciones para este bot
-            </div>
-          )}
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
-    </section>
+    </div>
   )
 }
