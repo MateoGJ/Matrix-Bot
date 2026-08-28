@@ -41,35 +41,35 @@ export function BotDetailView({ bot }: { bot: BotSummary }) {
         <div>
           <div className="flex items-center space-x-3 mb-2">
             <h2 className="text-3xl font-black text-white tracking-tight">{bot.name}</h2>
-            <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-widest ${bot.status === "ONLINE" ? "text-green-400 bg-green-400/10 border border-green-400/20" : "text-red-400 bg-red-400/10 border border-red-400/20"}`}>
+            <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-widest ${bot.status === "ONLINE" ? "text-foreground bg-foreground/10 border border-border" : "text-muted-foreground bg-muted/30 border border-border"}`}>
               {bot.status}
             </span>
           </div>
-          <span className="text-xs text-teal-500 font-bold tracking-widest">VER: {bot.version}</span>
+          <span className="text-xs text-muted-foreground font-bold tracking-widest">VER: {bot.version}</span>
         </div>
 
         <div className="flex flex-wrap items-center gap-6">
           <div className="text-right">
-            <span className="text-[10px] text-teal-500 block uppercase tracking-widest mb-0.5">Balance</span>
+            <span className="text-[10px] text-muted-foreground block uppercase tracking-widest mb-0.5">Balance</span>
             <span className="text-lg font-bold text-white">${bot.balance?.toFixed(2) || "0.00"}</span>
           </div>
           <div className="w-px h-8 bg-white/10 hidden md:block"></div>
           <div className="text-right">
-            <span className="text-[10px] text-teal-500 block uppercase tracking-widest mb-0.5">PnL Total</span>
+            <span className="text-[10px] text-muted-foreground block uppercase tracking-widest mb-0.5">PnL Total</span>
             <span className={`text-lg font-bold ${bot.totalPnl >= 0 ? "text-green-400" : "text-red-400"}`}>
               {bot.totalPnl >= 0 ? "+" : ""}${bot.totalPnl?.toFixed(2) || "0.00"}
             </span>
           </div>
           <div className="w-px h-8 bg-white/10 hidden md:block"></div>
           <div className="text-right">
-            <span className="text-[10px] text-teal-500 block uppercase tracking-widest mb-0.5">ROI Bot</span>
+            <span className="text-[10px] text-muted-foreground block uppercase tracking-widest mb-0.5">ROI Bot</span>
             <span className={`text-lg font-bold ${botRoi >= 0 ? "text-green-400" : "text-red-400"}`}>
               {botRoi >= 0 ? "+" : ""}{botRoi.toFixed(2)}%
             </span>
           </div>
           <div className="w-px h-8 bg-white/10 hidden md:block"></div>
           <div className="text-right">
-            <span className="text-[10px] text-teal-500 block uppercase tracking-widest mb-0.5">Total Ops</span>
+            <span className="text-[10px] text-muted-foreground block uppercase tracking-widest mb-0.5">Total Ops</span>
             <span className="text-lg font-bold text-white">{bot.totalOperations}</span>
           </div>
         </div>
@@ -79,14 +79,14 @@ export function BotDetailView({ bot }: { bot: BotSummary }) {
       <div className="flex flex-col xl:flex-row gap-6 shrink-0">
         
         {/* PANEL IZQUIERDO: Descripciones y Experimento */}
-        <div className="flex-1 bg-black/30 border border-white/5 rounded-lg p-5">
-          <h3 className="text-[10px] text-teal-500 font-bold uppercase tracking-widest mb-4 flex items-center space-x-2">
+        <div className="flex-1 bg-transparent border border-border/50 rounded-lg p-5">
+          <h3 className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest mb-4 flex items-center space-x-2">
             <span>ADN / ESTRATEGIA</span>
           </h3>
           <div className="space-y-4">
             <div>
-              <span className="text-[10px] text-purple-600 block uppercase tracking-widest mb-1">Experimento Activo:</span>
-              <span className="text-sm font-bold text-cyan-400">{experimentName}</span>
+              <span className="text-[10px] text-muted-foreground block uppercase tracking-widest mb-1">Experimento Activo:</span>
+              <span className="text-sm font-bold text-foreground">{experimentName}</span>
             </div>
             <div>
               {/* 👈 ACÁ CAMBIÉ text-teal-400 a text-white */}
@@ -98,15 +98,15 @@ export function BotDetailView({ bot }: { bot: BotSummary }) {
         </div>
 
         {/* PANEL DERECHO: Operación Activa Compacta */}
-        <div className="w-full xl:w-[320px] shrink-0 bg-black/40 border border-white/5 rounded-lg p-5 flex flex-col justify-center">
+        <div className="w-full xl:w-[320px] shrink-0 bg-transparent border border-border/50 rounded-lg p-5 flex flex-col justify-center">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-[10px] text-teal-500 font-bold uppercase tracking-widest flex items-center space-x-2">
+            <h3 className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest flex items-center space-x-2">
               <span className={`h-1.5 w-1.5 rounded-full ${trade ? (trade.estadoProteccion === 'PP' ? 'bg-green-400 animate-ping' : 'bg-cyan-400 animate-ping') : 'bg-teal-600'}`} />
               <span>RADAR EN VIVO</span>
             </h3>
             {/* 👈 ACÁ AGREGUÉ LA FECHA CHIQUITITA dd/mm 00:00 */}
             {trade?.fechaInicio && (
-              <span className="text-[9px] text-amber-500 font-bold tracking-widest">
+              <span className="text-[9px] text-muted-foreground font-bold tracking-widest">
                 {formatRadarDate(trade.fechaInicio)}
               </span>
             )}
@@ -119,23 +119,23 @@ export function BotDetailView({ bot }: { bot: BotSummary }) {
                   {trade.tipo}
                 </span>
                 <span className="text-sm font-bold text-white">{trade.symbol}</span>
-                <span className="text-sm font-bold text-pink-500">{trade.apalancamiento}</span>
+                <span className="text-sm font-bold text-foreground">{trade.apalancamiento}</span>
               </div>
               
               <div className="flex justify-between items-center text-xs">
-                <span className="text-fuchsia-500 uppercase tracking-widest text-[9px]">Margen</span>
+                <span className="text-muted-foreground uppercase tracking-widest text-[9px]">Margen</span>
                 <span className="text-teal-300 font-bold">${trade.margen?.toFixed(2)}</span>
               </div>
               
               <div className="flex justify-between items-center text-xs">
-                <span className="text-fuchsia-500 uppercase tracking-widest text-[9px]">ROI</span>
+                <span className="text-muted-foreground uppercase tracking-widest text-[9px]">ROI</span>
                 <span className={`font-bold ${trade.pnlPct >= 0 ? "text-green-400" : "text-red-400"}`}>
                   {trade.pnlPct >= 0 ? "+" : ""}{trade.pnlPct?.toFixed(2)}%
                 </span>
               </div>
 
               <div className="flex justify-between items-center text-xs">
-                <span className="text-fuchsia-500 uppercase tracking-widest text-[9px]">PNL</span>
+                <span className="text-muted-foreground uppercase tracking-widest text-[9px]">PNL</span>
                 <span className={`font-bold ${trade.pnlActual >= 0 ? "text-green-400" : "text-red-400"}`}>
                   {trade.pnlActual >= 0 ? "+" : ""}{trade.pnlActual?.toFixed(2)}%
                 </span>
