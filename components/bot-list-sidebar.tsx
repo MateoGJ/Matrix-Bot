@@ -14,7 +14,7 @@ export function BotListSidebar({ bots, selectedBotId, onSelectBot }: BotListSide
     if (sortBy === "PNL_DESC") return b.totalPnl - a.totalPnl
     return a.name.localeCompare(b.name)
   })
-  return <div className="flex h-full w-full flex-col bg-sidebar/75 font-mono text-sm">
+  return <div className="flex h-full w-full flex-col bg-sidebar/48 font-mono text-sm">
     <div className="shrink-0 border-b border-sidebar-border/70 p-4">
       <div className="mb-4 flex items-center justify-between"><div><p className="eyebrow">Fleet selector</p><p className="mt-1 text-xs font-bold uppercase tracking-wider text-sidebar-foreground">Nodos activos <span className="text-primary">({bots?.length || 0})</span></p></div><span className="status-dot size-2 rounded-full bg-chart-2" /></div>
       <div className="flex gap-2"><input aria-label="Buscar bot" type="text" placeholder="Buscar bot..." value={search} onChange={(e) => setSearch(e.target.value)} className="min-w-0 flex-1 rounded-md border border-sidebar-border bg-secondary/60 px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none" /><select aria-label="Ordenar bots" value={sortBy} onChange={(e) => setSortBy(e.target.value as SortOption)} className="w-24 rounded-md border border-sidebar-border bg-secondary/60 px-2 text-[10px] text-muted-foreground focus:border-primary focus:outline-none"><option value="ACTIVE_FIRST">Activos</option><option value="PNL_DESC">PNL</option><option value="NAME">Nombre</option></select></div>

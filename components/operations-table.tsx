@@ -45,9 +45,9 @@ export function OperationsTable({ botId }: OperationsTableProps) {
 
   return (
     <div className="flex flex-col gap-4 font-mono">
-      <div className="glass-surface overflow-hidden rounded-xl p-4 sm:p-5">
+      <div className="glass-surface overflow-hidden rounded-lg p-3 sm:p-4">
         <div className="flex flex-wrap justify-between items-center gap-4 mb-4">
-          <h3 className="text-xs font-bold text-indigo-400 uppercase tracking-wider">
+          <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
             HISTORIAL DE OPERACIONES - {botId?.toUpperCase()}
           </h3>
           <input
@@ -55,7 +55,7 @@ export function OperationsTable({ botId }: OperationsTableProps) {
             placeholder="Filtrar por símbolo o tipo..."
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            className="bg-black/50 border border-white/20 rounded px-3 py-1 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-green-400"
+            className="min-w-48 rounded border border-border bg-background/45 px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
           />
         </div>
 

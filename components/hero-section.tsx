@@ -19,10 +19,10 @@ export function HeroSection() {
   }, [])
 
   return (
-    <section className="relative overflow-hidden px-4 pb-10 pt-14 sm:pb-14 sm:pt-20">
+    <section className="relative overflow-hidden px-4 pb-8 pt-10 sm:pb-10 sm:pt-14">
       <div className="mx-auto max-w-5xl text-center">
         <p className="eyebrow mb-5 font-mono">01 / Autonomous crypto execution</p>
-        <h1 className="text-balance font-mono text-4xl font-bold tracking-[-0.04em] text-foreground sm:text-6xl lg:text-7xl">
+        <h1 className="text-balance font-mono text-3xl font-bold tracking-[-0.04em] text-foreground sm:text-5xl lg:text-6xl">
           <span className="glitch">{glitchText}</span>
         </h1>
         <p className="mx-auto mt-5 max-w-2xl text-pretty font-mono text-sm leading-6 text-muted-foreground sm:text-base">{">"} Bot de trading automatizado para operar con disciplina, datos y control de riesgo.</p>
