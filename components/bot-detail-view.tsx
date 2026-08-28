@@ -34,42 +34,42 @@ export function BotDetailView({ bot }: { bot: BotSummary }) {
   }
 
   return (
-    <div className="flex h-full flex-col gap-4 p-4 font-mono sm:p-5">
+    <div className="flex h-full flex-col gap-5 p-4 font-mono sm:p-6">
       
       {/* HEADER DEL BOT */}
       <div className="flex shrink-0 flex-col items-start justify-between gap-5 border-b border-border/60 pb-5 md:flex-row md:items-center">
         <div>
           <div className="flex items-center space-x-3 mb-2">
-            <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">{bot.name}</h2>
-            <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-widest ${bot.status === "ONLINE" ? "text-foreground bg-foreground/10 border border-border" : "text-muted-foreground bg-muted/30 border border-border"}`}>
+            <h2 className="text-3xl font-black text-white tracking-tight">{bot.name}</h2>
+            <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-widest ${bot.status === "ONLINE" ? "text-green-400 bg-green-400/10 border border-green-400/20" : "text-red-400 bg-red-400/10 border border-red-400/20"}`}>
               {bot.status}
             </span>
           </div>
-          <span className="text-xs text-muted-foreground font-bold tracking-widest">VER: {bot.version}</span>
+          <span className="text-xs text-teal-500 font-bold tracking-widest">VER: {bot.version}</span>
         </div>
 
-        <div className="grid w-full grid-cols-2 gap-x-6 gap-y-3 sm:w-auto sm:grid-cols-4 sm:gap-x-5">
+        <div className="flex flex-wrap items-center gap-6">
           <div className="text-right">
-            <span className="text-[10px] text-muted-foreground block uppercase tracking-widest mb-0.5">Balance</span>
+            <span className="text-[10px] text-teal-500 block uppercase tracking-widest mb-0.5">Balance</span>
             <span className="text-lg font-bold text-white">${bot.balance?.toFixed(2) || "0.00"}</span>
           </div>
           <div className="w-px h-8 bg-white/10 hidden md:block"></div>
           <div className="text-right">
-            <span className="text-[10px] text-muted-foreground block uppercase tracking-widest mb-0.5">PnL Total</span>
+            <span className="text-[10px] text-teal-500 block uppercase tracking-widest mb-0.5">PnL Total</span>
             <span className={`text-lg font-bold ${bot.totalPnl >= 0 ? "text-green-400" : "text-red-400"}`}>
               {bot.totalPnl >= 0 ? "+" : ""}${bot.totalPnl?.toFixed(2) || "0.00"}
             </span>
           </div>
           <div className="w-px h-8 bg-white/10 hidden md:block"></div>
           <div className="text-right">
-            <span className="text-[10px] text-muted-foreground block uppercase tracking-widest mb-0.5">ROI Bot</span>
+            <span className="text-[10px] text-teal-500 block uppercase tracking-widest mb-0.5">ROI Bot</span>
             <span className={`text-lg font-bold ${botRoi >= 0 ? "text-green-400" : "text-red-400"}`}>
               {botRoi >= 0 ? "+" : ""}{botRoi.toFixed(2)}%
             </span>
           </div>
           <div className="w-px h-8 bg-white/10 hidden md:block"></div>
           <div className="text-right">
-            <span className="text-[10px] text-muted-foreground block uppercase tracking-widest mb-0.5">Total Ops</span>
+            <span className="text-[10px] text-teal-500 block uppercase tracking-widest mb-0.5">Total Ops</span>
             <span className="text-lg font-bold text-white">{bot.totalOperations}</span>
           </div>
         </div>
@@ -79,14 +79,14 @@ export function BotDetailView({ bot }: { bot: BotSummary }) {
       <div className="flex flex-col xl:flex-row gap-6 shrink-0">
         
         {/* PANEL IZQUIERDO: Descripciones y Experimento */}
-        <div className="min-w-0 flex-1 rounded-lg border border-border/50 bg-transparent p-4">
-          <h3 className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest mb-4 flex items-center space-x-2">
+        <div className="flex-1 bg-black/30 border border-white/5 rounded-lg p-5">
+          <h3 className="text-[10px] text-teal-500 font-bold uppercase tracking-widest mb-4 flex items-center space-x-2">
             <span>ADN / ESTRATEGIA</span>
           </h3>
           <div className="space-y-4">
             <div>
-              <span className="text-[10px] text-muted-foreground block uppercase tracking-widest mb-1">Experimento Activo:</span>
-              <span className="text-sm font-bold text-foreground">{experimentName}</span>
+              <span className="text-[10px] text-purple-600 block uppercase tracking-widest mb-1">Experimento Activo:</span>
+              <span className="text-sm font-bold text-cyan-400">{experimentName}</span>
             </div>
             <div>
               {/* 👈 ACÁ CAMBIÉ text-teal-400 a text-white */}
@@ -98,15 +98,15 @@ export function BotDetailView({ bot }: { bot: BotSummary }) {
         </div>
 
         {/* PANEL DERECHO: Operación Activa Compacta */}
-        <div className="w-full shrink-0 rounded-lg border border-border/50 bg-transparent p-4 xl:w-[350px]">
+        <div className="w-full xl:w-[320px] shrink-0 bg-black/40 border border-white/5 rounded-lg p-5 flex flex-col justify-center">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest flex items-center space-x-2">
+            <h3 className="text-[10px] text-teal-500 font-bold uppercase tracking-widest flex items-center space-x-2">
               <span className={`h-1.5 w-1.5 rounded-full ${trade ? (trade.estadoProteccion === 'PP' ? 'bg-green-400 animate-ping' : 'bg-cyan-400 animate-ping') : 'bg-teal-600'}`} />
               <span>RADAR EN VIVO</span>
             </h3>
             {/* 👈 ACÁ AGREGUÉ LA FECHA CHIQUITITA dd/mm 00:00 */}
             {trade?.fechaInicio && (
-              <span className="text-[9px] text-muted-foreground font-bold tracking-widest">
+              <span className="text-[9px] text-amber-500 font-bold tracking-widest">
                 {formatRadarDate(trade.fechaInicio)}
               </span>
             )}
@@ -119,23 +119,23 @@ export function BotDetailView({ bot }: { bot: BotSummary }) {
                   {trade.tipo}
                 </span>
                 <span className="text-sm font-bold text-white">{trade.symbol}</span>
-                <span className="text-sm font-bold text-foreground">{trade.apalancamiento}</span>
+                <span className="text-sm font-bold text-pink-500">{trade.apalancamiento}</span>
               </div>
               
               <div className="flex justify-between items-center text-xs">
-                <span className="text-muted-foreground uppercase tracking-widest text-[9px]">Margen</span>
-                <span className="text-sky-300 font-bold">${trade.margen?.toFixed(2)}</span>
+                <span className="text-fuchsia-500 uppercase tracking-widest text-[9px]">Margen</span>
+                <span className="text-teal-300 font-bold">${trade.margen?.toFixed(2)}</span>
               </div>
               
               <div className="flex justify-between items-center text-xs">
-                <span className="text-muted-foreground uppercase tracking-widest text-[9px]">ROI</span>
+                <span className="text-fuchsia-500 uppercase tracking-widest text-[9px]">ROI</span>
                 <span className={`font-bold ${trade.pnlPct >= 0 ? "text-green-400" : "text-red-400"}`}>
                   {trade.pnlPct >= 0 ? "+" : ""}{trade.pnlPct?.toFixed(2)}%
                 </span>
               </div>
 
               <div className="flex justify-between items-center text-xs">
-                <span className="text-muted-foreground uppercase tracking-widest text-[9px]">PNL</span>
+                <span className="text-fuchsia-500 uppercase tracking-widest text-[9px]">PNL</span>
                 <span className={`font-bold ${trade.pnlActual >= 0 ? "text-green-400" : "text-red-400"}`}>
                   {trade.pnlActual >= 0 ? "+" : ""}{trade.pnlActual?.toFixed(2)}%
                 </span>
@@ -164,10 +164,10 @@ export function BotDetailView({ bot }: { bot: BotSummary }) {
 
       {/* PESTAÑAS (Fill height) */}
       <div className="flex flex-col flex-1">
-        <div className="flex gap-5 border-b border-border/50 pb-2 mt-2 shrink-0">
-          <button onClick={() => setActiveTab("OPERATIONS")} className={`pb-2 text-xs font-bold uppercase tracking-widest transition-all ${activeTab === "OPERATIONS" ? "text-foreground border-b-2 border-sky-400" : "text-teal-600 hover:text-sky-300"}`}>Operaciones</button>
-          <button onClick={() => setActiveTab("MONTHLY")} className={`pb-2 text-xs font-bold uppercase tracking-widest transition-all ${activeTab === "MONTHLY" ? "text-foreground border-b-2 border-sky-400" : "text-teal-600 hover:text-sky-300"}`}>Overview</button>
-          <button onClick={() => setActiveTab("CONFIG")} className={`pb-2 text-xs font-bold uppercase tracking-widest transition-all ${activeTab === "CONFIG" ? "text-foreground border-b-2 border-sky-400" : "text-teal-600 hover:text-sky-300"}`}>Configuración</button>
+        <div className="flex space-x-4 border-b border-white/5 pb-2 mt-4 shrink-0">
+          <button onClick={() => setActiveTab("OPERATIONS")} className={`pb-2 text-xs font-bold uppercase tracking-widest transition-all ${activeTab === "OPERATIONS" ? "text-white border-b-2 border-green-500" : "text-teal-600 hover:text-teal-300"}`}>Operaciones</button>
+          <button onClick={() => setActiveTab("MONTHLY")} className={`pb-2 text-xs font-bold uppercase tracking-widest transition-all ${activeTab === "MONTHLY" ? "text-white border-b-2 border-green-500" : "text-teal-600 hover:text-teal-300"}`}>Overview</button>
+          <button onClick={() => setActiveTab("CONFIG")} className={`pb-2 text-xs font-bold uppercase tracking-widest transition-all ${activeTab === "CONFIG" ? "text-white border-b-2 border-green-500" : "text-teal-600 hover:text-teal-300"}`}>Configuración</button>
         </div>
 
         <div className="pt-4 flex-1 overflow-y-auto">

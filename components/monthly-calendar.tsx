@@ -291,7 +291,7 @@ export function MonthlyCalendar({ botId }: { botId: BotId }) {
             </div>
 
             {/* RIGHT: MONTHLY HISTORY BOX */}
-            <div className="p-6 flex flex-col bg-transparent h-full">
+            <div className="p-6 flex flex-col bg-black/20 h-full">
               <h3 className="text-xl font-bold font-mono text-white/80 mb-6 flex items-center gap-2">
                 <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
                 Registro Mensual
