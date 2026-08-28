@@ -9,53 +9,26 @@ export function HeroSection() {
   useEffect(() => {
     const originalText = "Generá plata con la mejor tecnología"
     const glitchChars = "!@#$%^&*()_+-=[]{}|;:,.<>?"
-
     const glitchInterval = setInterval(() => {
       if (Math.random() > 0.95) {
-        const glitched = originalText
-          .split("")
-          .map((char) => (Math.random() > 0.9 ? glitchChars[Math.floor(Math.random() * glitchChars.length)] : char))
-          .join("")
-        setGlitchText(glitched)
-
+        setGlitchText(originalText.split("").map((char) => Math.random() > 0.9 ? glitchChars[Math.floor(Math.random() * glitchChars.length)] : char).join(""))
         setTimeout(() => setGlitchText(originalText), 100)
       }
     }, 111)
-
     return () => clearInterval(glitchInterval)
   }, [])
 
   return (
-    <section className="relative py-20 px-4">
-      <div className="container mx-auto text-center">
-        <div className="mb-8">
-          <h1 className="text-5xl md:text-7xl font-bold mb-6 font-mono">
-            <span className="bg-gradient-to-r from-white via-gray-300 to-white bg-clip-text text-transparent animate-pulse">
-              {glitchText}
-            </span>
-          </h1>
-          <p className="text-xl md:text-2xl text-gray-300 mb-8 font-mono">
-            {">"} Bot de trading automatizado
-          </p>
-          <p className="text-lg text-gray-400 mb-12 font-mono opacity-80">
-            Rendimientos sin pérdidas
-          </p>
-        </div>
-
-        <div className="flex flex-col md:flex-row gap-6 justify-center items-center">
-          <Button
-            size="lg"
-            className="bg-gradient-to-r from-white to-gray-300 hover:from-gray-200 hover:to-gray-400 text-black font-bold px-8 py-4 text-lg rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg shadow-white/25"
-          >
-            🚀 Iniciar Trading Bot
-          </Button>
-          <Button
-            size="lg"
-            variant="outline"
-            className="border-2 border-gray-400 text-gray-300 hover:bg-gray-400 hover:text-black font-bold px-8 py-4 text-lg rounded-lg transition-all duration-300 transform hover:scale-105 bg-transparent"
-          >
-            📊 Ver Demo
-          </Button>
+    <section className="relative overflow-hidden px-4 pb-10 pt-14 sm:pb-14 sm:pt-20">
+      <div className="mx-auto max-w-5xl text-center">
+        <p className="eyebrow mb-5 font-mono">01 / Autonomous crypto execution</p>
+        <h1 className="text-balance font-mono text-4xl font-bold tracking-[-0.04em] text-foreground sm:text-6xl lg:text-7xl">
+          <span className="glitch">{glitchText}</span>
+        </h1>
+        <p className="mx-auto mt-5 max-w-2xl text-pretty font-mono text-sm leading-6 text-muted-foreground sm:text-base">{">"} Bot de trading automatizado para operar con disciplina, datos y control de riesgo.</p>
+        <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <Button className="matrix-button w-full rounded-md bg-primary px-6 font-mono text-xs font-bold uppercase tracking-wider text-primary-foreground hover:bg-primary/90 sm:w-auto">Iniciar trading bot</Button>
+          <Button variant="outline" className="w-full rounded-md border-border bg-transparent px-6 font-mono text-xs font-bold uppercase tracking-wider text-foreground hover:bg-secondary sm:w-auto">Ver demo</Button>
         </div>
       </div>
     </section>

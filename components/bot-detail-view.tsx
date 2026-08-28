@@ -34,10 +34,10 @@ export function BotDetailView({ bot }: { bot: BotSummary }) {
   }
 
   return (
-    <div className="p-6 space-y-6 font-mono h-full flex flex-col">
+    <div className="flex h-full flex-col gap-5 p-4 font-mono sm:p-6">
       
       {/* HEADER DEL BOT */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 pb-6 border-b border-white/5 shrink-0">
+      <div className="flex shrink-0 flex-col items-start justify-between gap-5 border-b border-border/60 pb-5 md:flex-row md:items-center">
         <div>
           <div className="flex items-center space-x-3 mb-2">
             <h2 className="text-3xl font-black text-white tracking-tight">{bot.name}</h2>
@@ -81,7 +81,7 @@ export function BotDetailView({ bot }: { bot: BotSummary }) {
         {/* PANEL IZQUIERDO: Descripciones y Experimento */}
         <div className="flex-1 bg-black/30 border border-white/5 rounded-lg p-5">
           <h3 className="text-[10px] text-teal-500 font-bold uppercase tracking-widest mb-4 flex items-center space-x-2">
-            <span>🧬 ADN / ESTRATEGIA</span>
+            <span>ADN / ESTRATEGIA</span>
           </h3>
           <div className="space-y-4">
             <div>

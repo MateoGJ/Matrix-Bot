@@ -15,95 +15,42 @@ export default function Home() {
 
   useEffect(() => {
     let mounted = true
-
     const fetchBots = async () => {
       try {
         const data = await getFleetStats()
         if (mounted) {
           setBots(data)
-          if (!selectedBotId && data.length > 0) {
-            setSelectedBotId(data[0].id)
-          }
+          if (!selectedBotId && data.length > 0) setSelectedBotId(data[0].id)
           setLoading(false)
         }
       } catch (error) {
         console.error("Error trayendo la flota:", error)
       }
     }
-
     fetchBots()
     const interval = setInterval(fetchBots, 5000)
-
-    return () => {
-      mounted = false
-      clearInterval(interval)
-    }
+    return () => { mounted = false; clearInterval(interval) }
   }, [selectedBotId])
 
   const selectedBot = bots.find((b) => b.id === selectedBotId) || bots[0]
 
   return (
-    <div className="min-h-screen bg-black text-white relative font-mono selection:bg-zinc-700">
+    <div className="relative min-h-screen overflow-hidden text-foreground selection:bg-primary/30">
       <MatrixRain />
-      
-      <div className="relative z-10 flex flex-col w-full min-h-screen">
+      <div className="relative z-10 flex min-h-screen flex-col">
         <Header />
-        
-        <HeroSection /> 
-
-        <main className="container mx-auto px-2 sm:px-4 pb-12 sm:pb-20 max-w-[1600px] flex-1 flex flex-col">
-          
-          <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-4">
-            <div className="flex items-center gap-3">
-              <h2 className="text-2xl font-black text-white tracking-widest uppercase flex items-center">
-                <span className="text-zinc-500 mr-3">_</span> 
-                CENTRO DE MANDO
-              </h2>
-            </div>
-            
-            {!loading && bots.length > 0 && (
-              <div className="flex items-center gap-4 text-xs text-zinc-400 font-bold">
-                <div className="bg-zinc-900/80 px-4 py-2 rounded-lg border border-white/5">
-                  NODOS: <span className="text-white ml-2">{bots.length}</span>
-                </div>
-                <div className="bg-zinc-900/80 px-4 py-2 rounded-lg border border-white/5">
-                  OPERANDO: <span className="text-cyan-400 ml-2">
-                    {bots.filter(b => b.activeTrade).length}
-                  </span>
-                </div>
-              </div>
-            )}
+        <HeroSection />
+        <main className="mx-auto flex w-full max-w-[1600px] flex-1 flex-col px-3 pb-12 sm:px-6 lg:px-8">
+          <div className="mb-5 flex flex-col gap-4 border-b border-border/60 pb-4 md:flex-row md:items-end md:justify-between">
+            <div><p className="eyebrow mb-2 font-mono">Live fleet monitor</p><h2 className="font-mono text-xl font-bold tracking-[0.12em] text-foreground sm:text-2xl">CENTRO DE MANDO</h2></div>
+            {!loading && bots.length > 0 && <div className="flex gap-2 font-mono text-[10px] uppercase tracking-wider"><div className="panel-surface rounded-md px-3 py-2 text-muted-foreground">Nodos <span className="ml-2 text-foreground">{bots.length}</span></div><div className="panel-surface rounded-md px-3 py-2 text-muted-foreground">Operando <span className="ml-2 text-primary">{bots.filter((b) => b.activeTrade).length}</span></div></div>}
           </div>
-
-          {/* ESTO EVITA EL COLAPSO: min-h-[600px] y flex-1 */}
-          <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 flex-1 min-h-[500px] lg:min-h-[600px]">
-            
-            <div className="w-full lg:w-[360px] xl:w-[400px] h-auto lg:h-full flex-shrink-0 flex flex-col rounded-xl overflow-hidden shadow-2xl">
-              <BotListSidebar
-                bots={bots}
-                selectedBotId={selectedBotId}
-                onSelectBot={setSelectedBotId}
-              />
-            </div>
-
-            <div className="flex-1 min-w-0 h-auto lg:h-full overflow-y-visible lg:overflow-y-auto overflow-x-hidden bg-zinc-900/80 backdrop-blur-xl border border-white/5 rounded-xl shadow-2xl custom-scrollbar">
-              {loading ? (
-                <div className="flex flex-col items-center justify-center h-full text-zinc-400 space-y-4 py-32">
-                  <div className="w-12 h-12 border-4 border-zinc-800 border-t-zinc-400 rounded-full animate-spin"></div>
-                  <p className="animate-pulse tracking-widest text-xs font-bold uppercase">
-                    &gt; Conectando a los nodos...
-                  </p>
-                </div>
-              ) : selectedBot ? (
-                <BotDetailView bot={selectedBot} />
-              ) : (
-                <div className="flex items-center justify-center h-full text-zinc-600 text-xs py-32 font-bold uppercase tracking-widest">
-                  &gt; SIN CONEXIÓN A LA RED DE BOTS.
-                </div>
-              )}
+          <div className="flex min-h-[500px] flex-1 flex-col gap-4 lg:min-h-[600px] lg:flex-row lg:gap-5">
+            <div className="flex h-auto w-full shrink-0 flex-col overflow-hidden rounded-xl glass-surface lg:h-full lg:w-[340px] xl:w-[380px]"><BotListSidebar bots={bots} selectedBotId={selectedBotId} onSelectBot={setSelectedBotId} /></div>
+            <div className="min-h-[500px] min-w-0 flex-1 overflow-x-hidden overflow-y-visible rounded-xl glass-surface lg:h-full lg:overflow-y-auto custom-scrollbar">
+              {loading ? <div className="flex h-full flex-col items-center justify-center gap-4 py-32 text-muted-foreground"><div className="size-10 animate-spin rounded-full border-2 border-border border-t-primary" /><p className="font-mono text-xs font-bold uppercase tracking-widest">{">"} Conectando a los nodos...</p></div> : selectedBot ? <BotDetailView bot={selectedBot} /> : <div className="flex h-full items-center justify-center py-32 font-mono text-xs font-bold uppercase tracking-widest text-muted-foreground">{">"} Sin conexión a la red de bots.</div>}
             </div>
           </div>
-          
         </main>
       </div>
     </div>

@@ -191,9 +191,9 @@ export function MonthlyCalendar({ botId }: { botId: BotId }) {
   if (!isMounted) return null
 
   return (
-    <section id="history" className="py-16 px-4">
+    <section id="history" className="px-0 py-6">
       <div className="container mx-auto max-w-[1400px]">
-        <div className="bg-gradient-to-br from-white/10 to-gray-100/5 border border-white/20 rounded-lg overflow-hidden flex flex-col">
+        <div className="glass-surface flex flex-col overflow-hidden rounded-xl">
           
           {/* HEADER */}
           <div className="border-b border-white/20 p-6">

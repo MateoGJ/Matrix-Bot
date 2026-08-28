@@ -44,8 +44,8 @@ export function OperationsTable({ botId }: OperationsTableProps) {
   )
 
   return (
-    <div className="space-y-4 font-mono">
-      <div className="bg-black/60 border border-white/10 rounded-lg p-5">
+    <div className="flex flex-col gap-4 font-mono">
+      <div className="glass-surface overflow-hidden rounded-xl p-4 sm:p-5">
         <div className="flex flex-wrap justify-between items-center gap-4 mb-4">
           <h3 className="text-xs font-bold text-indigo-400 uppercase tracking-wider">
             HISTORIAL DE OPERACIONES - {botId?.toUpperCase()}

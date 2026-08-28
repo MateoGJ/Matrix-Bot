@@ -67,7 +67,7 @@ export default function BotConsole({ botRunning }: { botRunning?: boolean }) {
 
   return (
     <section className="py-6">
-      <div className="bg-gradient-to-br from-white/10 to-gray-100/5 border border-white/20 rounded-lg backdrop-blur-sm p-4">
+      <div className="glass-surface rounded-xl p-4">
         <div className="flex items-center justify-between mb-3">
           <div className="space-y-1">
             <div className="text-white font-mono">

@@ -21,10 +21,10 @@ export function BotVersionConfig({ botName, versions }: BotVersionConfigProps) {
   const currentData = versions.find(v => v.version === selectedVersion) || versions[0]
 
   return (
-    <div className="space-y-6 font-mono text-sm">
+    <div className="flex flex-col gap-5 font-mono text-sm">
       <div className="bg-black/60 border border-white/10 rounded-lg p-5">
         <h3 className="text-white font-bold mb-4 flex items-center space-x-2">
-          <span>📜</span>
+          <span className="text-primary">VERSIONS</span>
           <span>HISTORIAL DE VERSIONES - {botName}</span>
         </h3>
 
@@ -62,7 +62,7 @@ export function BotVersionConfig({ botName, versions }: BotVersionConfigProps) {
 
       <div className="bg-black/60 border border-white/10 rounded-lg p-5">
         <h3 className="text-white font-bold mb-3 flex items-center space-x-2">
-          <span>⚙️</span>
+          <span className="text-primary">JSON</span>
           <span>CONFIGURACIÓN DEL SISTEMA (CONFIG JSON)</span>
         </h3>
         <pre className="bg-black/80 p-4 rounded border border-white/10 text-green-400 text-xs overflow-x-auto">

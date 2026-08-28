@@ -3,118 +3,14 @@
 import { useEffect, useMemo, useState } from "react"
 import { getBotStats, type Stats, type BotId } from "@/lib/bot-api"
 
-const BOTS = [
-  { id: "sniper", name: "SNIPER", img: "/bots/SNPR.jpg" },
-  { id: "machinegun", name: "MACHINE GUN", img: "/bots/MG.png" },
-  { id: "tanque", name: "TANQUE", img: "/bots/TNQ.webp" },
-  { id: "browning", name: "BROWNING", img: "/bots/BRWN.jfif" },
-] as const
+const BOTS = [{ id: "sniper", name: "SNIPER", img: "/bots/SNPR.jpg" }, { id: "machinegun", name: "MACHINE GUN", img: "/bots/MG.png" }, { id: "tanque", name: "TANQUE", img: "/bots/TNQ.webp" }, { id: "browning", name: "BROWNING", img: "/bots/BRWN.jfif" }] as const
 
 export function StatsOverview() {
-  const [data, setData] = useState<Record<BotId, Stats | null>>({
-    sniper: null,
-    machinegun: null,
-    tanque: null,
-    browning: null,
-  })
-
-  useEffect(() => {
-    async function load() {
-      for (const bot of BOTS) {
-        const stats = await getBotStats(bot.id)
-        setData(prev => ({ ...prev, [bot.id]: stats }))
-      }
-    }
-
-    load()
-    const i = setInterval(load, 30000)
-    return () => clearInterval(i)
-  }, [])
-
-  // =========================
-  // TOTAL PNL (SUMA DE LOS 4)
-  // =========================
-  const totalPnl = useMemo(() => {
-    return Object.values(data).reduce((acc, s) => {
-      if (!s) return acc
-      return acc + s.totalPnl
-    }, 0)
-  }, [data])
-
-  const totalPnlPositive = totalPnl >= 0
-
-  return (
-    <section className="space-y-6 px-4 py-21 md:px-6 lg:px-8">
-
-      {/* =========================
-          GLOBAL PNL CARD
-      ========================= */}
-      <div className="bg-gradient-to-br from-white/10 to-gray-100/5 border border-white/20 rounded-xl p-6 text-center">
-        <p className="text-s text-gray-400 uppercase tracking-widest">
-          PNL TOTAL 
-        </p>
-        <p
-          className={`mt-2 font-mono text-3xl ${
-            totalPnlPositive ? "text-green-400" : "text-red-400"
-          }`}
-        >
-          {totalPnl.toFixed(2)} USDT
-        </p>
-      </div>
-
-      {/* =========================
-          PER BOT STATS
-      ========================= */}
-
-      {BOTS.map(bot => {
-        const s = data[bot.id]
-        if (!s) return null
-
-        return (
-          <div
-            key={bot.id}
-            className="grid grid-cols-[8rem_repeat(5,1fr)] gap-12 items-center"
-          >
-            {/* BOT CARD (CHICA, CENTRADA) */}
-            <div className="col-span-1 flex justify-center">
-              <div className="w-21 h-21 bg-black/40 border border-white/20 rounded-lg p-1 flex flex-col items-center justify-center">
-                <img
-                  src={bot.img}
-                  alt={bot.name}
-                  className="w-full h-full object-contain"
-                />
-              
-                <span className="mt-1 text-[12px] text-gray-400 font-mono text-center leading-none">
-                  {bot.name}
-                </span>
-              </div>
-            </div>
-
-            {/* STATS */}
-            {[
-              ["Balance", s.balance.toFixed(2), "USDT", s.balance >= 0],
-              ["PNL", s.totalPnl.toFixed(2), "USDT", s.totalPnl >= 0],
-              ["OPS", s.totalOperations, "", true],
-              ["W", s.wins, "", true],
-              ["L", s.losses, "", false],
-            ].map(([label, value, unit, pos], i) => (
-              <div
-                key={i}
-                className="bg-gradient-to-br from-white/10 to-gray-100/5 border border-white/20 rounded-lg p-4 text-center"
-              >
-                <p className="text-xs text-gray-400 uppercase">{label}</p>
-                <p
-                  className={`font-mono text-lg ${
-                    pos ? "text-green-400" : "text-red-400"
-                  }`}
-                >
-                  {value} {unit}
-                </p>
-              </div>
-            ))}
-          </div>
-        )
-      })}
-    </section>
-  )
+  const [data, setData] = useState<Record<BotId, Stats | null>>({ sniper: null, machinegun: null, tanque: null, browning: null })
+  useEffect(() => { async function load() { for (const bot of BOTS) { const stats = await getBotStats(bot.id); setData((prev) => ({ ...prev, [bot.id]: stats })) } } load(); const i = setInterval(load, 30000); return () => clearInterval(i) }, [])
+  const totalPnl = useMemo(() => Object.values(data).reduce((acc, s) => acc + (s?.totalPnl || 0), 0), [data])
+  return <section className="flex flex-col gap-5 px-4 py-10 md:px-6 lg:px-8">
+    <div className="glass-surface rounded-xl p-6"><p className="eyebrow">Fleet performance</p><div className="mt-3 flex flex-wrap items-end justify-between gap-4"><div><p className="text-xs uppercase tracking-widest text-muted-foreground">PNL total</p><p className={`mt-1 font-mono text-4xl font-bold tracking-tight ${totalPnl >= 0 ? "text-chart-2" : "text-destructive"}`}>{totalPnl.toFixed(2)} <span className="text-sm font-normal text-muted-foreground">USDT</span></p></div><span className="rounded-full border border-border bg-secondary/60 px-3 py-1 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Live · 30s</span></div></div>
+    {BOTS.map((bot) => { const s = data[bot.id]; if (!s) return null; return <div key={bot.id} className="grid gap-2 rounded-xl border border-border/60 bg-card/55 p-3 sm:grid-cols-[7rem_repeat(5,1fr)] sm:items-center sm:gap-3"><div className="flex items-center gap-3 sm:flex-col sm:justify-center"><div className="flex size-14 items-center justify-center overflow-hidden rounded-lg border border-border bg-background/60 p-1"><img src={bot.img} alt={bot.name} className="size-full object-contain" /></div><span className="font-mono text-[10px] font-bold tracking-wider text-muted-foreground">{bot.name}</span></div>{[["Balance", s.balance.toFixed(2), "USDT", s.balance >= 0], ["PNL", s.totalPnl.toFixed(2), "USDT", s.totalPnl >= 0], ["OPS", s.totalOperations, "", true], ["W", s.wins, "", true], ["L", s.losses, "", false]].map(([label, value, unit, pos]) => <div key={String(label)} className="rounded-lg border border-border/50 bg-secondary/45 p-3"><p className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</p><p className={`mt-1 font-mono text-base font-bold ${pos ? "text-chart-2" : "text-destructive"}`}>{value} <span className="text-[10px] font-normal text-muted-foreground">{unit}</span></p></div>)}</div> })}
+  </section>
 }
