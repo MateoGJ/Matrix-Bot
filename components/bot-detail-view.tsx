@@ -34,13 +34,13 @@ export function BotDetailView({ bot }: { bot: BotSummary }) {
   }
 
   return (
-    <div className="flex h-full flex-col gap-5 p-4 font-mono sm:p-6">
+    <div className="flex h-full flex-col gap-4 p-4 font-mono sm:p-5">
       
       {/* HEADER DEL BOT */}
       <div className="flex shrink-0 flex-col items-start justify-between gap-5 border-b border-border/60 pb-5 md:flex-row md:items-center">
         <div>
           <div className="flex items-center space-x-3 mb-2">
-            <h2 className="text-3xl font-black text-white tracking-tight">{bot.name}</h2>
+            <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">{bot.name}</h2>
             <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-widest ${bot.status === "ONLINE" ? "text-foreground bg-foreground/10 border border-border" : "text-muted-foreground bg-muted/30 border border-border"}`}>
               {bot.status}
             </span>
@@ -48,7 +48,7 @@ export function BotDetailView({ bot }: { bot: BotSummary }) {
           <span className="text-xs text-muted-foreground font-bold tracking-widest">VER: {bot.version}</span>
         </div>
 
-        <div className="flex flex-wrap items-center gap-6">
+        <div className="grid w-full grid-cols-2 gap-x-6 gap-y-3 sm:w-auto sm:grid-cols-4 sm:gap-x-5">
           <div className="text-right">
             <span className="text-[10px] text-muted-foreground block uppercase tracking-widest mb-0.5">Balance</span>
             <span className="text-lg font-bold text-white">${bot.balance?.toFixed(2) || "0.00"}</span>
@@ -79,7 +79,7 @@ export function BotDetailView({ bot }: { bot: BotSummary }) {
       <div className="flex flex-col xl:flex-row gap-6 shrink-0">
         
         {/* PANEL IZQUIERDO: Descripciones y Experimento */}
-        <div className="flex-1 bg-transparent border border-border/50 rounded-lg p-5">
+        <div className="min-w-0 flex-1 rounded-lg border border-border/50 bg-transparent p-4">
           <h3 className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest mb-4 flex items-center space-x-2">
             <span>ADN / ESTRATEGIA</span>
           </h3>
@@ -98,7 +98,7 @@ export function BotDetailView({ bot }: { bot: BotSummary }) {
         </div>
 
         {/* PANEL DERECHO: Operación Activa Compacta */}
-        <div className="w-full xl:w-[320px] shrink-0 bg-transparent border border-border/50 rounded-lg p-5 flex flex-col justify-center">
+        <div className="w-full shrink-0 rounded-lg border border-border/50 bg-transparent p-4 xl:w-[350px]">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest flex items-center space-x-2">
               <span className={`h-1.5 w-1.5 rounded-full ${trade ? (trade.estadoProteccion === 'PP' ? 'bg-green-400 animate-ping' : 'bg-cyan-400 animate-ping') : 'bg-teal-600'}`} />
@@ -124,7 +124,7 @@ export function BotDetailView({ bot }: { bot: BotSummary }) {
               
               <div className="flex justify-between items-center text-xs">
                 <span className="text-muted-foreground uppercase tracking-widest text-[9px]">Margen</span>
-                <span className="text-teal-300 font-bold">${trade.margen?.toFixed(2)}</span>
+                <span className="text-sky-300 font-bold">${trade.margen?.toFixed(2)}</span>
               </div>
               
               <div className="flex justify-between items-center text-xs">
@@ -164,10 +164,10 @@ export function BotDetailView({ bot }: { bot: BotSummary }) {
 
       {/* PESTAÑAS (Fill height) */}
       <div className="flex flex-col flex-1">
-        <div className="flex space-x-4 border-b border-white/5 pb-2 mt-4 shrink-0">
-          <button onClick={() => setActiveTab("OPERATIONS")} className={`pb-2 text-xs font-bold uppercase tracking-widest transition-all ${activeTab === "OPERATIONS" ? "text-white border-b-2 border-green-500" : "text-teal-600 hover:text-teal-300"}`}>Operaciones</button>
-          <button onClick={() => setActiveTab("MONTHLY")} className={`pb-2 text-xs font-bold uppercase tracking-widest transition-all ${activeTab === "MONTHLY" ? "text-white border-b-2 border-green-500" : "text-teal-600 hover:text-teal-300"}`}>Overview</button>
-          <button onClick={() => setActiveTab("CONFIG")} className={`pb-2 text-xs font-bold uppercase tracking-widest transition-all ${activeTab === "CONFIG" ? "text-white border-b-2 border-green-500" : "text-teal-600 hover:text-teal-300"}`}>Configuración</button>
+        <div className="flex gap-5 border-b border-border/50 pb-2 mt-2 shrink-0">
+          <button onClick={() => setActiveTab("OPERATIONS")} className={`pb-2 text-xs font-bold uppercase tracking-widest transition-all ${activeTab === "OPERATIONS" ? "text-foreground border-b-2 border-sky-400" : "text-teal-600 hover:text-sky-300"}`}>Operaciones</button>
+          <button onClick={() => setActiveTab("MONTHLY")} className={`pb-2 text-xs font-bold uppercase tracking-widest transition-all ${activeTab === "MONTHLY" ? "text-foreground border-b-2 border-sky-400" : "text-teal-600 hover:text-sky-300"}`}>Overview</button>
+          <button onClick={() => setActiveTab("CONFIG")} className={`pb-2 text-xs font-bold uppercase tracking-widest transition-all ${activeTab === "CONFIG" ? "text-foreground border-b-2 border-sky-400" : "text-teal-600 hover:text-sky-300"}`}>Configuración</button>
         </div>
 
         <div className="pt-4 flex-1 overflow-y-auto">
