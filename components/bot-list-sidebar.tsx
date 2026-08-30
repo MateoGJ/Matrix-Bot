@@ -29,7 +29,6 @@ export function BotListSidebar({ bots, selectedBotId, onSelectBot }: BotListSide
     })
 
   return (
-    // CAMBIO CLAVE: bg-black sólido y h-full con flex-col para que ocupe todo el alto siempre
     <div className="flex flex-col h-full w-full bg-black border-r border-white/5 font-mono text-sm">
       
       {/* HEADER SIDEBAR */}
@@ -52,7 +51,7 @@ export function BotListSidebar({ bots, selectedBotId, onSelectBot }: BotListSide
         />
       </div>
 
-      {/* LISTA DE BOTS (Clean UI sin cajas) */}
+      {/* LISTA DE BOTS */}
       <div className="flex-1 overflow-y-auto custom-scrollbar">
         {processedBots.length === 0 ? (
           <div className="p-4 text-center text-xs text-gray-600">Ningún bot encontrado</div>
@@ -70,54 +69,49 @@ export function BotListSidebar({ bots, selectedBotId, onSelectBot }: BotListSide
                   isSelected ? "bg-zinc-900/40" : "hover:bg-zinc-900/20"
                 }`}
               >
-                {/* Indicador visual de selección */}
                 {isSelected && <div className="absolute left-0 top-0 bottom-0 w-1 bg-green-500" />}
                 
-                <div className="flex justify-between items-start mb-2">
-                  {/* Nombre y Estado */}
+                <div className="flex flex-col space-y-2">
+                  {/* FILA 1: Nombre */}
                   <div className="flex items-center space-x-2">
                     <span className={`h-1.5 w-1.5 rounded-full ${bot.status === "ONLINE" ? "bg-green-500" : "bg-red-500"}`} />
-                    <span className={`font-bold text-sm tracking-wide ${isSelected ? "text-white" : "text-gray-300"}`}>
+                    <span className={`font-bold text-m tracking-wide ${isSelected ? "text-white" : "text-gray-300"}`}>
                       {bot.name}
                     </span>
                   </div>
                   
-                  {/* MÉTRICAS TOP RIGHT */}
-                  <div className="text-right text-[10px] leading-tight space-y-0.5">
-                    <div className="text-gray-400">
-                      BAL: <span className="text-white">${bot.balance?.toFixed(2)}</span>
-                    </div>
-                    <div className="text-gray-500">
-                      ROI: <span className={botRoi >= 0 ? "text-green-400" : "text-red-400"}>{botRoi >= 0 ? "+" : ""}{botRoi.toFixed(2)}%</span>
-                      {" | "}
-                      PNL: <span className={bot.totalPnl >= 0 ? "text-green-400" : "text-red-400"}>{bot.totalPnl >= 0 ? "+" : ""}${bot.totalPnl?.toFixed(2)}</span>
-                    </div>
+                  {/* FILA 2: Métricas */}
+                  <div className="flex items-center gap-3 text-[12px] font-bold text-gray-500 tracking-wider">
+                    <span className="pr-5">BALANCE: <span className="text-white">${bot.balance?.toFixed(2)}</span></span>
+                    <span className="pr-5">ROI: <span className={botRoi >= 0 ? "text-green-400" : "text-red-400"}>{botRoi >= 0 ? "+" : ""}{botRoi.toFixed(2)}%</span></span>
+                    <span className="pr-5">PNL: <span className={bot.totalPnl >= 0 ? "text-green-400" : "text-red-400"}>{bot.totalPnl >= 0 ? "+" : ""}{bot.totalPnl?.toFixed(2)}$</span></span>
                   </div>
-                </div>
 
-                {/* INFO DE OPERACIÓN (FILA INFERIOR) */}
-                {trade && (
-                  <div className="mt-3 flex items-center justify-between text-[10px] text-gray-400 font-bold bg-white/5 py-1.5 px-2 rounded">
-                    <div className="flex gap-2">
-                      <span className={trade.tipo === "BUY" ? "text-green-400" : "text-red-400"}>{trade.tipo}</span>
-                      <span className="text-white">{trade.symbol}</span>
-                      <span className="text-teal-400">${trade.margen?.toFixed(2)}</span>
+                  {/* FILA 3: Operación (Solo si hay) */}
+                  {trade && (
+                    <div className="mt-1 flex items-center justify-between text-[12px] text-gray-400 font-bold bg-white/5 py-1.5 px-2 rounded">
+                      <div className="flex gap-2">
+                        <span className={trade.tipo === "BUY" ? "text-green-400" : "text-red-400"}>{trade.tipo}</span>
+                        <span>  |  </span>
+                        <span className="text-teal-400">${trade.margen?.toFixed(2)}</span>
+                      </div>
+                      <div className="flex gap-2 text-right">
+                        <span>  |  </span>
+                        <span className={trade.pnlPct >= 0 ? "text-green-400" : "text-red-400"}>
+                          {trade.pnlPct >= 0 ? "+" : ""}{trade.pnlPct?.toFixed(2)}%
+                        </span>
+                        <span>  |  </span>
+                        <span className={trade.pnlActual >= 0 ? "text-green-400" : "text-red-400"}>
+                          {trade.pnlActual >= 0 ? "+" : ""}{trade.pnlActual?.toFixed(2)}$
+                        </span>
+                        <span>  |  </span>
+                        <span className={trade.estadoProteccion === "PP" ? "text-green-500" : "text-red-500"}>
+                          {trade.estadoProteccion}: {trade.estadoProteccion === "PP" ? `+${trade.roiProtegido}%` : `-${trade.slInicial}%`}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex gap-2 text-right">
-                      <span className={trade.pnlPct >= 0 ? "text-green-400" : "text-red-400"}>
-                        {trade.pnlPct >= 0 ? "+" : ""}{trade.pnlPct?.toFixed(2)}%
-                      </span>
-                      {" | "}
-                      <span className={trade.pnlActual >= 0 ? "text-green-400" : "text-red-400"}>
-                        {trade.pnlActual >= 0 ? "+" : ""}{trade.pnlActual?.toFixed(2)}$
-                      </span>
-                      {" | "}
-                      <span className={trade.estadoProteccion === "PP" ? "text-green-500" : "text-red-500"}>
-                        {trade.estadoProteccion}: {trade.estadoProteccion === "PP" ? `+${trade.roiProtegido}%` : `-${trade.slInicial}%`}
-                      </span>
-                    </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </button>
             )
           })

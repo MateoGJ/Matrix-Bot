@@ -60,6 +60,7 @@ async function getMongoDb() {
 export interface ActiveTrade {
   symbol: string
   tipo: string
+  status: "ONLINE" | "OFFLINE"
   margen: number
   pnlPct: number
   pnlActual: number
@@ -131,6 +132,7 @@ export async function getFleetStats(): Promise<BotSummary[]> {
         activeTrade = {
           symbol: opActiva.simbolo,
           tipo: opActiva.tipo_operacion,
+          status: status,
           margen: opActiva.cantidad_usdt || 0,
           pnlPct: opActiva.roi_actual || 0,
           pnlActual: opActiva.pnl_actual || 0,

@@ -14,27 +14,20 @@ export function OperationsTable({ botId }: OperationsTableProps) {
 
   useEffect(() => {
     let mounted = true
-
     const loadOperations = async () => {
       if (!botId) return
       try {
         const ops = await getRecentOperations(botId, 500)
         if (mounted) setOperations(ops || [])
       } catch (error) {
-        console.error("Error cargando operaciones:", error)
         if (mounted) setOperations([])
       } finally {
         if (mounted) setLoading(false)
       }
     }
-
     loadOperations()
     const interval = setInterval(loadOperations, 10000)
-
-    return () => {
-      mounted = false
-      clearInterval(interval)
-    }
+    return () => { mounted = false; clearInterval(interval) }
   }, [botId])
 
   const filteredOperations = operations.filter(
@@ -60,17 +53,16 @@ export function OperationsTable({ botId }: OperationsTableProps) {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
+          <table className="w-full text-xs border-collapse">
             <thead>
-              {/* 👈 ACÁ ESTÁN LAS 7 COLUMNAS QUE PEDISTE EXACTAS */}
               <tr className="border-b-2 border-white/10 text-pink-400 uppercase tracking-wider">
-                <th className="p-3">Símbolo</th>
-                <th className="p-3">Tipo</th>
-                <th className="p-3">Apalancamiento</th>
-                <th className="p-3">Margen</th>
-                <th className="p-3">Resultado</th>
-                <th className="p-3">PnL</th>
-                <th className="p-3">Fecha</th>
+                <th className="p-3 text-center">Símbolo</th>
+                <th className="p-3 text-center">Tipo</th>
+                <th className="p-3 text-center">AplX</th>
+                <th className="p-3 text-center">Margen</th>
+                <th className="p-3 text-center">Resultado</th>
+                <th className="p-3 text-center">PnL</th>
+                <th className="p-3 text-center">Fecha</th>
               </tr>
             </thead>
             <tbody>
@@ -88,38 +80,27 @@ export function OperationsTable({ botId }: OperationsTableProps) {
                 </tr>
               ) : (
                 filteredOperations.map((op, idx) => (
-                  <tr
-                    key={op.id || idx}
-                    className="border-b-2 border-white/14 hover:bg-white/5 transition-colors"
-                  >
-                    <td className="p-3 font-bold text-white">{op.simbolo}</td>
-                    <td className="p-3">
-                      <span
-                        className={`font-bold ${
-                          op.tipo_operacion === "BUY" || op.tipo_operacion === "LONG"
-                            ? "text-green-400"
-                            : "text-red-400"
-                        }`}
-                      >
+                  <tr key={op.id || idx} className="border-b-2 border-white/5 hover:bg-white/5 transition-colors">
+                    <td className="p-3 font-bold text-white text-center">{op.simbolo}</td>
+                    <td className="p-3 text-center">
+                      <span className={`font-bold ${op.tipo_operacion === "BUY" || op.tipo_operacion === "LONG" ? "text-green-400" : "text-red-400"}`}>
                         {op.tipo_operacion}
                       </span>
                     </td>
-                    <td className="p-3 text-lime-400 font-bold">{op.apalancamiento}x</td>
-                    <td className="p-3 text-teal-300 font-bold">${Number(op.margen).toFixed(2)}</td>
-                    <td className="p-3 font-bold">
+                    <td className="p-3 text-lime-400 font-bold text-center">{op.apalancamiento}x</td>
+                    <td className="p-3 text-teal-300 font-bold text-center">${Number(op.margen).toFixed(2)}</td>
+                    <td className="p-3 font-bold text-center">
                       <span className={Number(op.resultado) >= 0 ? "text-green-400" : "text-red-400"}>
-                        {Number(op.resultado) >= 0 ? "+" : ""}
-                        {Number(op.resultado).toFixed(2)}%
+                        {Number(op.resultado) >= 0 ? "+" : ""}{Number(op.resultado).toFixed(2)}%
                       </span>
                     </td>
-                    <td className="p-3 font-bold">
+                    <td className="p-3 font-bold text-center">
                       <span className={Number(op.pnl) >= 0 ? "text-green-400" : "text-red-400"}>
-                        {Number(op.pnl) >= 0 ? "+" : ""}
-                        {Number(op.pnl).toFixed(2)} USDT
+                        {Number(op.pnl) >= 0 ? "+" : ""}{Number(op.pnl).toFixed(2)} USDT
                       </span>
                     </td>
-                    <td className="p-3 text-amber-500">
-                      {op.fecha ? new Date(op.fecha).toLocaleString("es-AR", { day: '2-digit', month: '2-digit', hour: '2-digit', minute:'2-digit' }) : "-"}
+                    <td className="p-3 text-amber-500 text-center">
+                      {op.fecha ? new Date(op.fecha).toLocaleString("es-AR", { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute:'2-digit' }) : "-"}
                     </td>
                   </tr>
                 ))

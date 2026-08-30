@@ -35,14 +35,14 @@ export function HeroSection() {
             </span>
           </h1>
           <p className="text-xl md:text-2xl text-gray-300 mb-8 font-mono">
-            {">"} Bot de trading automatizado
+            {">"} Bots de trading automatizado
           </p>
           <p className="text-lg text-gray-400 mb-12 font-mono opacity-80">
-            Rendimientos sin pérdidas
+            Testeo y desarrollo de estrategias de trading automatizado para criptomonedas en Binance.
           </p>
         </div>
 
-        <div className="flex flex-col md:flex-row gap-6 justify-center items-center">
+        {/* <div className="flex flex-col md:flex-row gap-6 justify-center items-center">
           <Button
             size="lg"
             className="bg-gradient-to-r from-white to-gray-300 hover:from-gray-200 hover:to-gray-400 text-black font-bold px-8 py-4 text-lg rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg shadow-white/25"
@@ -56,7 +56,7 @@ export function HeroSection() {
           >
             📊 Ver Demo
           </Button>
-        </div>
+        </div> */}
       </div>
     </section>
   )

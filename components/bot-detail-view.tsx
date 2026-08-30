@@ -85,8 +85,8 @@ export function BotDetailView({ bot }: { bot: BotSummary }) {
           </h3>
           <div className="space-y-4">
             <div>
-              <span className="text-[10px] text-purple-600 block uppercase tracking-widest mb-1">Experimento Activo:</span>
-              <span className="text-sm font-bold text-cyan-400">{experimentName}</span>
+              <span className="text-[10px] text-lime-500 block uppercase tracking-widest mb-1">Experimento Activo:</span>
+              <span className="text-s font-bold text-cyan-400">{experimentName}</span>
             </div>
             <div>
               {/* 👈 ACÁ CAMBIÉ text-teal-400 a text-white */}
@@ -115,27 +115,27 @@ export function BotDetailView({ bot }: { bot: BotSummary }) {
           {trade ? (
             <div className="space-y-3">
               <div className="flex justify-between items-center border-b border-white/5 pb-2">
-                <span className={`text-sm font-bold ${trade.tipo === "BUY" ? "text-green-400" : "text-red-400"}`}>
+                <span className={`text-s font-bold ${trade.tipo === "BUY" ? "text-green-400" : "text-red-400"}`}>
                   {trade.tipo}
                 </span>
-                <span className="text-sm font-bold text-white">{trade.symbol}</span>
-                <span className="text-sm font-bold text-pink-500">{trade.apalancamiento}</span>
+                <span className="text-s font-bold text-white">{trade.symbol}</span>
+                <span className="text-s font-bold text-lime-400">{trade.apalancamiento}X</span>
               </div>
               
-              <div className="flex justify-between items-center text-xs">
-                <span className="text-fuchsia-500 uppercase tracking-widest text-[9px]">Margen</span>
+              <div className="flex justify-between items-center text-s">
+                <span className="text-lime-500 uppercase tracking-widest text-[13px]">Margen</span>
                 <span className="text-teal-300 font-bold">${trade.margen?.toFixed(2)}</span>
               </div>
               
-              <div className="flex justify-between items-center text-xs">
-                <span className="text-fuchsia-500 uppercase tracking-widest text-[9px]">ROI</span>
+              <div className="flex justify-between items-center text-s">
+                <span className="text-lime-500 uppercase tracking-widest text-[13px]">ROI</span>
                 <span className={`font-bold ${trade.pnlPct >= 0 ? "text-green-400" : "text-red-400"}`}>
                   {trade.pnlPct >= 0 ? "+" : ""}{trade.pnlPct?.toFixed(2)}%
                 </span>
               </div>
 
-              <div className="flex justify-between items-center text-xs">
-                <span className="text-fuchsia-500 uppercase tracking-widest text-[9px]">PNL</span>
+              <div className="flex justify-between items-center text-s">
+                <span className="text-lime-500 uppercase tracking-widest text-[13px]">PNL</span>
                 <span className={`font-bold ${trade.pnlActual >= 0 ? "text-green-400" : "text-red-400"}`}>
                   {trade.pnlActual >= 0 ? "+" : ""}{trade.pnlActual?.toFixed(2)}%
                 </span>
@@ -145,10 +145,10 @@ export function BotDetailView({ bot }: { bot: BotSummary }) {
                 <span className={`text-[10px] uppercase tracking-widest font-bold ${trade.estadoProteccion === "PP" ? "text-green-500" : "text-red-500"}`}>
                   {trade.estadoProteccion === "PP" ? "PP Asegurado" : "SL Riesgo"}
                 </span>
-                <span className={`text-sm font-bold ${trade.estadoProteccion === "PP" ? "text-green-400" : "text-red-400"}`}>
+                <span className={`text-s font-bold ${trade.estadoProteccion === "PP" ? "text-green-400" : "text-red-400"}`}>
                   {trade.estadoProteccion === "PP" ? "+" : ""}{trade.estadoProteccion === "PP" ? trade.roiProtegido?.toFixed(2) : `-${trade.slInicial}`}%
                 </span>
-                <span className={`text-sm font-bold ${trade.estadoProteccion === "PP" ? "text-green-400" : "text-red-400"}`}>
+                <span className={`text-s font-bold ${trade.estadoProteccion === "PP" ? "text-green-400" : "text-red-400"}`}>
                   {trade.estadoProteccion === "PP" ? "+" : ""}{trade.estadoProteccion === "PP" ? trade.pnlAsegurado?.toFixed(2) : `-${trade.pnlSl?.toFixed(2)}`}$
                 </span>
               </div>
