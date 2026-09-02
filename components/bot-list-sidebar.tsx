@@ -81,9 +81,9 @@ export function BotListSidebar({ bots, selectedBotId, onSelectBot }: BotListSide
                   </div>
                   
                   {/* FILA 2: Métricas */}
-                  <div className="flex items-center gap-3 text-[12px] font-bold text-gray-500 tracking-wider">
+                  <div className="flex items-center gap-2 text-[12px] font-bold text-gray-500 tracking-wider">
                     <span className="pr-5">BAL: <span className="text-white">${bot.balance?.toFixed(2)}</span></span>
-                    <span className="pr-5">ROI: <span className={botRoi >= 0 ? "text-green-400" : "text-red-400"}>{botRoi >= 0 ? "+" : ""}{botRoi.toFixed(2)}%</span></span>
+                    <span className="pr-5">ROI: <span className={botRoi >= 0 ? "text-green-400" : "text-red-400"}>{botRoi >= 0 ? "+" : ""}{botRoi.toFixed(1)}%</span></span>
                     <span className="pr-5">PNL: <span className={bot.totalPnl >= 0 ? "text-green-400" : "text-red-400"}>{bot.totalPnl >= 0 ? "+" : ""}{bot.totalPnl?.toFixed(2)}$</span></span>
                   </div>
 
