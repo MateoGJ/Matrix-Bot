@@ -86,7 +86,7 @@ export default function Home() {
               />
             </div>
 
-            <div className="flex-1 min-w-0 h-auto lg:h-full overflow-y-visible lg:overflow-y-auto overflow-x-hidden bg-zinc-900/80 backdrop-blur-xl border border-white/5 rounded-xl shadow-2xl custom-scrollbar">
+            <div className="flex-1 min-w-0 h-auto lg:h-full overflow-y-visible lg:overflow-y-auto overflow-x-hidden bg-zinc-900/50 backdrop-blur-xl border border-white/5 rounded-xl shadow-2xl custom-scrollbar">
               {loading ? (
                 <div className="flex flex-col items-center justify-center h-full text-zinc-400 space-y-4 py-32">
                   <div className="w-12 h-12 border-4 border-zinc-800 border-t-zinc-400 rounded-full animate-spin"></div>

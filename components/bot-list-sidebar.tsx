@@ -29,10 +29,10 @@ export function BotListSidebar({ bots, selectedBotId, onSelectBot }: BotListSide
     })
 
   return (
-    <div className="flex flex-col h-full w-full bg-black border-r border-white/5 font-mono text-sm">
+    <div className="flex flex-col h-full w-full bg-black/70 border-r border-white/5 font-mono text-sm">
       
       {/* HEADER SIDEBAR */}
-      <div className="p-4 border-b border-white/10 space-y-4 shrink-0">
+      <div className="p-4 border-b border-white/35 space-y-4 shrink-0">
         <div className="flex items-center justify-between">
           <span className="text-xs text-gray-500 font-bold uppercase tracking-wider">
             NODOS ACTIVOS ({bots?.length || 0})
@@ -65,7 +65,7 @@ export function BotListSidebar({ bots, selectedBotId, onSelectBot }: BotListSide
               <button
                 key={bot.id}
                 onClick={() => onSelectBot(bot.id)}
-                className={`w-full text-left p-4 border-b border-white/5 transition-colors relative block ${
+                className={`w-full text-left p-4 border-b border-white/35 transition-colors relative block ${
                   isSelected ? "bg-zinc-900/40" : "hover:bg-zinc-900/20"
                 }`}
               >
@@ -82,7 +82,7 @@ export function BotListSidebar({ bots, selectedBotId, onSelectBot }: BotListSide
                   
                   {/* FILA 2: Métricas */}
                   <div className="flex items-center gap-3 text-[12px] font-bold text-gray-500 tracking-wider">
-                    <span className="pr-5">BALANCE: <span className="text-white">${bot.balance?.toFixed(2)}</span></span>
+                    <span className="pr-5">BAL: <span className="text-white">${bot.balance?.toFixed(2)}</span></span>
                     <span className="pr-5">ROI: <span className={botRoi >= 0 ? "text-green-400" : "text-red-400"}>{botRoi >= 0 ? "+" : ""}{botRoi.toFixed(2)}%</span></span>
                     <span className="pr-5">PNL: <span className={bot.totalPnl >= 0 ? "text-green-400" : "text-red-400"}>{bot.totalPnl >= 0 ? "+" : ""}{bot.totalPnl?.toFixed(2)}$</span></span>
                   </div>

@@ -41,7 +41,7 @@ const CustomTooltip = ({ active, payload }: any) => {
         <p className={`font-mono font-bold text-xl ${
           isProfit ? 'text-green-400' : 'text-red-400'
         }`}>
-          {val.toFixed(2)} USDT
+          {val.toFixed(2)} $
         </p>
       </div>
     )
@@ -180,7 +180,7 @@ export function MonthlyCalendar({ botId }: { botId: BotId }) {
                 : "text-red-400"
             }`}
           >
-            {hasData ? `${pnl > 0 ? "+" : ""}${pnl.toFixed(2)} USDT` : "0.00 USDT"}
+            {hasData ? `${pnl > 0 ? "+" : ""}${pnl.toFixed(2)}$` : "0.00$"}
           </span>
         </div>,
       )
@@ -191,7 +191,7 @@ export function MonthlyCalendar({ botId }: { botId: BotId }) {
   if (!isMounted) return null
 
   return (
-    <section id="history" className="py-16 px-4">
+    <section id="history" className="py-16 px-0">
       <div className="container mx-auto max-w-[1400px]">
         <div className="bg-gradient-to-br from-white/10 to-gray-100/5 border border-white/20 rounded-lg overflow-hidden flex flex-col">
           
@@ -291,7 +291,7 @@ export function MonthlyCalendar({ botId }: { botId: BotId }) {
             </div>
 
             {/* RIGHT: MONTHLY HISTORY BOX */}
-            <div className="p-6 flex flex-col bg-black/20 h-full">
+            <div className="p-3 flex flex-col bg-black/20 h-full">
               <h3 className="text-xl font-bold font-mono text-white/80 mb-6 flex items-center gap-2">
                 <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
                 Registro Mensual
@@ -319,15 +319,12 @@ export function MonthlyCalendar({ botId }: { botId: BotId }) {
                           {monthNames[stat.month - 1]} <span className="text-gray-500 text-sm">{stat.year}</span>
                         </p>
                         <p className="text-xs text-gray-400 font-mono mt-1">
-                          {stat.operations} Operaciones
+                          {stat.operations} Opes
                         </p>
                       </div>
                       <div className="text-right">
                         <p className={`font-mono font-bold ${stat.pnl >= 0 ? "text-green-400" : "text-red-400"}`}>
-                          {stat.pnl >= 0 ? "+" : ""}{stat.pnl.toFixed(2)} USDT
-                        </p>
-                        <p className={`font-mono text-xs mt-1 px-2 py-0.5 rounded inline-block ${stat.pnl >= 0 ? "bg-green-500/20 text-green-300" : "bg-red-500/20 text-red-300"}`}>
-                          PNL / OP: {stat.operations > 0 ? (stat.pnl / stat.operations).toFixed(2) : "0.00"} USDT
+                          {stat.pnl >= 0 ? "+" : ""}{stat.pnl.toFixed(2)}$ USDT
                         </p>
                       </div>
                     </div>
@@ -346,7 +343,7 @@ export function MonthlyCalendar({ botId }: { botId: BotId }) {
                 {[...Array(5)].map((_, i) => <div key={i} className="h-24 bg-white/5 rounded-lg" />)}
               </div>
             ) : (
-              <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+              <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 text-center">
                 
                 {/* PNL Total */}
                 <div className="bg-white/5 border border-white/10 rounded-lg p-4 relative overflow-hidden group">

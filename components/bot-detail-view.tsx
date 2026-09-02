@@ -34,7 +34,7 @@ export function BotDetailView({ bot }: { bot: BotSummary }) {
   }
 
   return (
-    <div className="p-6 space-y-6 font-mono h-full flex flex-col">
+    <div className="p-4 space-y-6 font-mono h-full flex flex-col">
       
       {/* HEADER DEL BOT */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 pb-6 border-b border-white/5 shrink-0">
@@ -57,18 +57,18 @@ export function BotDetailView({ bot }: { bot: BotSummary }) {
           <div className="text-right">
             <span className="text-[10px] text-teal-500 block uppercase tracking-widest mb-0.5">PnL Total</span>
             <span className={`text-lg font-bold ${bot.totalPnl >= 0 ? "text-green-400" : "text-red-400"}`}>
-              {bot.totalPnl >= 0 ? "+" : ""}${bot.totalPnl?.toFixed(2) || "0.00"}
+              {bot.totalPnl >= 0 ? "+" : ""}{bot.totalPnl?.toFixed(2) || "0.00"}$
             </span>
           </div>
           <div className="w-px h-8 bg-white/10 hidden md:block"></div>
-          <div className="text-right">
+          <div className="text-center">
             <span className="text-[10px] text-teal-500 block uppercase tracking-widest mb-0.5">ROI Bot</span>
             <span className={`text-lg font-bold ${botRoi >= 0 ? "text-green-400" : "text-red-400"}`}>
               {botRoi >= 0 ? "+" : ""}{botRoi.toFixed(2)}%
             </span>
           </div>
           <div className="w-px h-8 bg-white/10 hidden md:block"></div>
-          <div className="text-right">
+          <div className="text-center">
             <span className="text-[10px] text-teal-500 block uppercase tracking-widest mb-0.5">Total Ops</span>
             <span className="text-lg font-bold text-white">{bot.totalOperations}</span>
           </div>
@@ -137,7 +137,7 @@ export function BotDetailView({ bot }: { bot: BotSummary }) {
               <div className="flex justify-between items-center text-s">
                 <span className="text-lime-500 uppercase tracking-widest text-[13px]">PNL</span>
                 <span className={`font-bold ${trade.pnlActual >= 0 ? "text-green-400" : "text-red-400"}`}>
-                  {trade.pnlActual >= 0 ? "+" : ""}{trade.pnlActual?.toFixed(2)}%
+                  {trade.pnlActual >= 0 ? "+" : ""}{trade.pnlActual?.toFixed(2)}$
                 </span>
               </div>
               
