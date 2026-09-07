@@ -272,3 +272,40 @@ export async function getBotStats(botId: BotId): Promise<Stats> {
     winRate: totalOperations > 0 ? (wins / totalOperations) * 100 : 0,
   }
 }
+
+// ==========================================
+// 9. HISTORIAL DE VERSIONES DEL BOT
+// ==========================================
+export async function getBotVersionHistory(botId: string) {
+  // Al usar una columna nativa 'version', el GROUP BY es exacto y evita duplicados en React
+  const [rows] = await pool.query(`
+    SELECT
+      version,
+      MAX(fecha) AS fecha,
+      COUNT(*) AS operaciones,
+      COALESCE(SUM(pnl), 0) AS pnl,
+      COALESCE(SUM(CASE WHEN pnl >= 0 THEN 1 ELSE 0 END), 0) AS wins,
+      MAX(config_snapshot) AS config_str
+    FROM historial_operaciones
+    WHERE bot_id = ? AND version IS NOT NULL
+    GROUP BY version
+    ORDER BY MAX(fecha) DESC
+  `, [botId])
+
+  return (rows as any[]).map(row => {
+    let parsedConfig = {}
+    try { parsedConfig = JSON.parse(row.config_str) } catch(e){}
+
+    const operaciones = Number(row.operaciones)
+    const wins = Number(row.wins)
+
+    return {
+      version: row.version || "Desconocida",
+      fecha: row.fecha ? new Date(row.fecha).toLocaleDateString("es-AR") : "-",
+      operaciones: operaciones,
+      winRate: operaciones > 0 ? (wins / operaciones) * 100 : 0,
+      pnl: Number(row.pnl),
+      config: parsedConfig
+    }
+  })
+}
