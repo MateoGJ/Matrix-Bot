@@ -9,30 +9,48 @@ interface BotListSidebarProps {
   onSelectBot: (id: string) => void
 }
 
-type SortOption = "ACTIVE_FIRST" | "PNL_DESC" | "NAME"
+type SortOption = "ACTIVE_TRADE" | "PNL_DESC" | "ROI_DESC" | "SL_DESC" | "ONLINE_ONLY" | "RECENT"
 
 export function BotListSidebar({ bots, selectedBotId, onSelectBot }: BotListSidebarProps) {
   const [search, setSearch] = useState("")
-  const [sortBy, setSortBy] = useState<SortOption>("ACTIVE_FIRST")
+  const [sortBy, setSortBy] = useState<SortOption>("ACTIVE_TRADE")
 
   const processedBots = [...(bots || [])]
     .filter((b) => b.name.toLowerCase().includes(search.toLowerCase()))
+    .filter((b) => sortBy === "ONLINE_ONLY" ? b.status === "ONLINE" : true)
     .sort((a, b) => {
-      if (sortBy === "ACTIVE_FIRST") {
+      if (sortBy === "ACTIVE_TRADE") {
         const aTrade = a.activeTrade ? 1 : 0
         const bTrade = b.activeTrade ? 1 : 0
         if (bTrade !== aTrade) return bTrade - aTrade
         return b.totalPnl - a.totalPnl
       }
       if (sortBy === "PNL_DESC") return b.totalPnl - a.totalPnl
+      if (sortBy === "ROI_DESC") {
+        const aRoi = a.balance > 0 ? (a.totalPnl / a.balance) : 0
+        const bRoi = b.balance > 0 ? (b.totalPnl / b.balance) : 0
+        return bRoi - aRoi
+      }
+      if (sortBy === "SL_DESC") {
+        // Lee el ADN del bot para filtrar por el stop loss más agresivo[cite: 19]
+        const aSl = a.rawConfig?.sl_porcentaje || 0
+        const bSl = b.rawConfig?.sl_porcentaje || 0
+        return bSl - aSl
+      }
+      if (sortBy === "RECENT") {
+        const aTime = a.activeTrade?.fechaInicio ? new Date(a.activeTrade.fechaInicio).getTime() : 0
+        const bTime = b.activeTrade?.fechaInicio ? new Date(b.activeTrade.fechaInicio).getTime() : 0
+        if (bTime !== aTime) return bTime - aTime
+        return b.totalPnl - a.totalPnl
+      }
       return a.name.localeCompare(b.name)
     })
 
   return (
-    <div className="flex flex-col h-full w-full bg-black/70 border-r border-white/5 font-mono text-sm">
+    <div className="flex flex-col h-full w-full bg-black/70 border-r border-white/5 font-mono text-sm relative">
       
-      {/* HEADER SIDEBAR */}
-      <div className="p-4 border-b border-white/35 space-y-4 shrink-0">
+      {/* HEADER SIDEBAR: Sticky (Queda fijo arriba al scrollear en celular) */}
+      <div className="sticky top-0 z-20 bg-black/95 backdrop-blur-md p-4 border-b border-white/35 space-y-4 shrink-0 shadow-xl">
         <div className="flex items-center justify-between">
           <span className="text-xs text-gray-500 font-bold uppercase tracking-wider">
             NODOS ACTIVOS ({bots?.length || 0})
@@ -49,9 +67,28 @@ export function BotListSidebar({ bots, selectedBotId, onSelectBot }: BotListSide
           onChange={(e) => setSearch(e.target.value)}
           className="w-full bg-transparent border-b border-white/20 px-2 py-1 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-green-500 transition-colors"
         />
+        
+        {/* FILTROS RÁPIDOS: Scroll Horizontal para celular */}
+        <div className="flex gap-2 overflow-x-auto custom-scrollbar pb-2 pt-1 -mx-2 px-2">
+          <button onClick={() => setSortBy("ACTIVE_TRADE")} className={`shrink-0 text-[10px] px-3 py-1.5 rounded font-bold tracking-widest uppercase transition-colors border ${sortBy === "ACTIVE_TRADE" ? "bg-green-500/20 text-green-400 border-green-500/30" : "bg-white/5 text-gray-500 border-white/5 hover:bg-white/10"}`}>
+            All
+          </button>
+          <button onClick={() => setSortBy("ROI_DESC")} className={`shrink-0 text-[10px] px-3 py-1.5 rounded font-bold tracking-widest uppercase transition-colors border ${sortBy === "ROI_DESC" ? "bg-purple-500/20 text-purple-400 border-purple-500/30" : "bg-white/5 text-gray-500 border-white/5 hover:bg-white/10"}`}>
+            ROI
+          </button>
+          <button onClick={() => setSortBy("SL_DESC")} className={`shrink-0 text-[10px] px-3 py-1.5 rounded font-bold tracking-widest uppercase transition-colors border ${sortBy === "SL_DESC" ? "bg-red-500/20 text-red-400 border-red-500/30" : "bg-white/5 text-gray-500 border-white/5 hover:bg-white/10"}`}>
+            SL
+          </button>
+          <button onClick={() => setSortBy("RECENT")} className={`shrink-0 text-[10px] px-3 py-1.5 rounded font-bold tracking-widest uppercase transition-colors border ${sortBy === "RECENT" ? "bg-cyan-500/20 text-cyan-400 border-cyan-500/30" : "bg-white/5 text-gray-500 border-white/5 hover:bg-white/10"}`}>
+            Lasts
+          </button>
+          <button onClick={() => setSortBy("ONLINE_ONLY")} className={`shrink-0 text-[10px] px-3 py-1.5 rounded font-bold tracking-widest uppercase transition-colors border ${sortBy === "ONLINE_ONLY" ? "bg-amber-500/20 text-amber-400 border-amber-500/30" : "bg-white/5 text-gray-500 border-white/5 hover:bg-white/10"}`}>
+            On
+          </button>
+        </div>
       </div>
 
-      {/* LISTA DE BOTS */}
+      {/* LISTA DE BOTS: Diseño intacto */}
       <div className="flex-1 overflow-y-auto custom-scrollbar">
         {processedBots.length === 0 ? (
           <div className="p-4 text-center text-xs text-gray-600">Ningún bot encontrado</div>
