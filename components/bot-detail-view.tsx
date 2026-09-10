@@ -173,7 +173,7 @@ export function BotDetailView({ bot }: { bot: BotSummary }) {
         <div className="pt-4 flex-1 overflow-y-auto">
           {activeTab === "OPERATIONS" && <OperationsTable botId={bot.id} />}
           {activeTab === "MONTHLY" && <MonthlyCalendar botId={bot.id} />}
-          {activeTab === "CONFIG" && <BotVersionConfig botName={bot.name} versions={mockVersions} />}
+          {activeTab === "CONFIG" && <BotVersionConfig botId={bot.id} botName={bot.name} />}
         </div>
       </div>
       

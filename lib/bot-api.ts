@@ -113,7 +113,7 @@ export async function getFleetStats(): Promise<BotSummary[]> {
     const fleetPromises = botsEnMongo.map(async (botMongo) => {
       const botId = botMongo.bot_id;
       
-      let config = {};
+      let config: any = {};
       try { config = typeof botMongo.config_actual === 'string' ? JSON.parse(botMongo.config_actual) : botMongo.config_actual } catch(e){}
 
       let status: "ONLINE" | "OFFLINE" = "OFFLINE";
