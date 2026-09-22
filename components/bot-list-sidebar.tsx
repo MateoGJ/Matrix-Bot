@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { BotSummary } from "@/lib/bot-api"
+import { useState, useEffect } from "react"
+import { BotSummary, getBotVersionHistory } from "@/lib/bot-api"
 
 interface BotListSidebarProps {
   bots: BotSummary[]
@@ -14,25 +14,61 @@ type SortOption = "ACTIVE_TRADE" | "PNL_DESC" | "ROI_DESC" | "SL_DESC" | "ONLINE
 export function BotListSidebar({ bots, selectedBotId, onSelectBot }: BotListSidebarProps) {
   const [search, setSearch] = useState("")
   const [sortBy, setSortBy] = useState<SortOption>("ACTIVE_TRADE")
+  
+  // 🧬 Memoria del PnL de la ÚLTIMA versión
+  const [latestPnlData, setLatestPnlData] = useState<Record<string, number>>({})
+
+  // Hash para recargar solo cuando hay operaciones nuevas
+  const opsHash = (bots || []).map(b => b.totalOperations).join(",")
+
+  useEffect(() => {
+    let mounted = true
+    const fetchLatestPnl = async () => {
+      if (!bots || bots.length === 0) return
+      const newData: Record<string, number> = {}
+      
+      await Promise.all(
+        bots.map(async (bot) => {
+          try {
+            const history = await getBotVersionHistory(bot.id)
+            if (history && history.length > 0) {
+              newData[bot.id] = history[0].pnl // Extrae la v. más reciente
+            } else {
+              newData[bot.id] = bot.totalPnl
+            }
+          } catch (e) {
+            newData[bot.id] = bot.totalPnl
+          }
+        })
+      )
+      
+      if (mounted) setLatestPnlData(newData)
+    }
+    
+    fetchLatestPnl()
+    return () => { mounted = false }
+  }, [opsHash])
 
   const processedBots = [...(bots || [])]
     .filter((b) => b.name.toLowerCase().includes(search.toLowerCase()))
     .filter((b) => sortBy === "ONLINE_ONLY" ? b.status === "ONLINE" : true)
     .sort((a, b) => {
+      const aPnl = latestPnlData[a.id] ?? a.totalPnl
+      const bPnl = latestPnlData[b.id] ?? b.totalPnl
+
       if (sortBy === "ACTIVE_TRADE") {
         const aTrade = a.activeTrade ? 1 : 0
         const bTrade = b.activeTrade ? 1 : 0
         if (bTrade !== aTrade) return bTrade - aTrade
-        return b.totalPnl - a.totalPnl
+        return bPnl - aPnl
       }
-      if (sortBy === "PNL_DESC") return b.totalPnl - a.totalPnl
+      if (sortBy === "PNL_DESC") return bPnl - aPnl
       if (sortBy === "ROI_DESC") {
-        const aRoi = a.balance > 0 ? (a.totalPnl / a.balance) : 0
-        const bRoi = b.balance > 0 ? (b.totalPnl / b.balance) : 0
+        const aRoi = aPnl * 100
+        const bRoi = bPnl * 100
         return bRoi - aRoi
       }
       if (sortBy === "SL_DESC") {
-        // Lee el ADN del bot para filtrar por el stop loss más agresivo[cite: 19]
         const aSl = a.rawConfig?.sl_porcentaje || 0
         const bSl = b.rawConfig?.sl_porcentaje || 0
         return bSl - aSl
@@ -41,7 +77,7 @@ export function BotListSidebar({ bots, selectedBotId, onSelectBot }: BotListSide
         const aTime = a.activeTrade?.fechaInicio ? new Date(a.activeTrade.fechaInicio).getTime() : 0
         const bTime = b.activeTrade?.fechaInicio ? new Date(b.activeTrade.fechaInicio).getTime() : 0
         if (bTime !== aTime) return bTime - aTime
-        return b.totalPnl - a.totalPnl
+        return bPnl - aPnl
       }
       return a.name.localeCompare(b.name)
     })
@@ -49,7 +85,7 @@ export function BotListSidebar({ bots, selectedBotId, onSelectBot }: BotListSide
   return (
     <div className="flex flex-col h-full w-full bg-black/70 border-r border-white/5 font-mono text-sm relative">
       
-      {/* HEADER SIDEBAR: Sticky (Queda fijo arriba al scrollear en celular) */}
+      {/* HEADER SIDEBAR */}
       <div className="sticky top-0 z-20 bg-black/95 backdrop-blur-md p-4 border-b border-white/35 space-y-4 shrink-0 shadow-xl">
         <div className="flex items-center justify-between">
           <span className="text-xs text-gray-500 font-bold uppercase tracking-wider">
@@ -68,7 +104,7 @@ export function BotListSidebar({ bots, selectedBotId, onSelectBot }: BotListSide
           className="w-full bg-transparent border-b border-white/20 px-2 py-1 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-green-500 transition-colors"
         />
         
-        {/* FILTROS RÁPIDOS: Scroll Horizontal para celular */}
+        {/* FILTROS RÁPIDOS */}
         <div className="flex gap-2 overflow-x-auto custom-scrollbar pb-2 pt-1 -mx-2 px-2">
           <button onClick={() => setSortBy("ACTIVE_TRADE")} className={`shrink-0 text-[10px] px-3 py-1.5 rounded font-bold tracking-widest uppercase transition-colors border ${sortBy === "ACTIVE_TRADE" ? "bg-green-500/20 text-green-400 border-green-500/30" : "bg-white/5 text-gray-500 border-white/5 hover:bg-white/10"}`}>
             All
@@ -88,7 +124,6 @@ export function BotListSidebar({ bots, selectedBotId, onSelectBot }: BotListSide
         </div>
       </div>
 
-      {/* LISTA DE BOTS: Diseño intacto */}
       <div className="flex-1 overflow-y-auto custom-scrollbar">
         {processedBots.length === 0 ? (
           <div className="p-4 text-center text-xs text-gray-600">Ningún bot encontrado</div>
@@ -96,7 +131,10 @@ export function BotListSidebar({ bots, selectedBotId, onSelectBot }: BotListSide
           processedBots.map((bot) => {
             const isSelected = bot.id === selectedBotId
             const trade = bot.activeTrade
-            const botRoi = bot.balance > 0 ? (bot.totalPnl / bot.balance) * 100 : 0
+            
+            // Datos estables para la vista calculados de la última versión
+            const botPnl = latestPnlData[bot.id] ?? bot.totalPnl
+            const botRoi = botPnl * 100 // ROI base $1
 
             return (
               <button
@@ -109,7 +147,6 @@ export function BotListSidebar({ bots, selectedBotId, onSelectBot }: BotListSide
                 {isSelected && <div className="absolute left-0 top-0 bottom-0 w-1 bg-green-500" />}
                 
                 <div className="flex flex-col space-y-2">
-                  {/* FILA 1: Nombre */}
                   <div className="flex items-center space-x-2">
                     <span className={`h-1.5 w-1.5 rounded-full ${bot.status === "ONLINE" ? "bg-green-500" : "bg-red-500"}`} />
                     <span className={`font-bold text-m tracking-wide ${isSelected ? "text-white" : "text-gray-300"}`}>
@@ -117,14 +154,12 @@ export function BotListSidebar({ bots, selectedBotId, onSelectBot }: BotListSide
                     </span>
                   </div>
                   
-                  {/* FILA 2: Métricas */}
                   <div className="flex items-center gap-2 text-[12px] font-bold text-gray-500 tracking-wider">
                     <span className="pr-5">BAL: <span className="text-white">${bot.balance?.toFixed(2)}</span></span>
                     <span className="pr-5">ROI: <span className={botRoi >= 0 ? "text-green-400" : "text-red-400"}>{botRoi >= 0 ? "+" : ""}{botRoi.toFixed(1)}%</span></span>
-                    <span className="pr-5">PNL: <span className={bot.totalPnl >= 0 ? "text-green-400" : "text-red-400"}>{bot.totalPnl >= 0 ? "+" : ""}{bot.totalPnl?.toFixed(2)}$</span></span>
+                    <span className="pr-5">PNL: <span className={botPnl >= 0 ? "text-green-400" : "text-red-400"}>{botPnl >= 0 ? "+" : ""}{botPnl?.toFixed(2)}$</span></span>
                   </div>
 
-                  {/* FILA 3: Operación (Solo si hay) */}
                   {trade && (
                     <div className="mt-1 flex items-center justify-between text-[12px] text-gray-400 font-bold bg-white/5 py-1.5 px-2 rounded">
                       <div className="flex gap-2">

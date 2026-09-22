@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { BotSummary } from "@/lib/bot-api"
+import { useState, useEffect } from "react"
+import { BotSummary, getBotVersionHistory } from "@/lib/bot-api"
 import { OperationsTable } from "./operations-table"
 import { MonthlyCalendar } from "./monthly-calendar"
 import { BotVersionConfig } from "./bot-version-config"
@@ -9,24 +9,36 @@ import { BotVersionConfig } from "./bot-version-config"
 export function BotDetailView({ bot }: { bot: BotSummary }) {
   const [activeTab, setActiveTab] = useState<"OPERATIONS" | "MONTHLY" | "CONFIG">("OPERATIONS")
   
+  // Estados para la última versión específica
+  const [latestPnl, setLatestPnl] = useState<number | null>(null)
+  const [latestOps, setLatestOps] = useState<number | null>(null)
+
+  // Consultamos el historial para aislar los datos de la última versión
+  useEffect(() => {
+    let mounted = true
+    getBotVersionHistory(bot.id).then(versions => {
+      if (mounted && versions.length > 0) {
+        setLatestPnl(versions[0].pnl)
+        setLatestOps(versions[0].operaciones)
+      }
+    })
+    return () => { mounted = false }
+  }, [bot.id])
+  
   const trade = bot.activeTrade
-  const botRoi = bot.balance > 0 ? (bot.totalPnl / bot.balance) * 100 : 0
+  
+  // Datos filtrados para el header
+  const pnlToShow = latestPnl !== null ? latestPnl : bot.totalPnl
+  const opsToShow = latestOps !== null ? latestOps : bot.totalOperations
+  
+  // ROI calculado partiendo de 1$ -> (PNL / 1) * 100
+  const botRoi = pnlToShow * 100
 
   // 🧬 Extracción del ADN (CONFIG)
   const config = bot.rawConfig || {}
   const experimentName = config.experiment || "N/A"
   const strategyDesc = config.estrategia_desc || "No hay descripción disponible para esta versión."
 
-  const mockVersions = [{
-      version: bot.version,
-      fecha: "En Vivo",
-      operaciones: bot.totalOperations,
-      winRate: bot.winRate,
-      pnl: bot.totalPnl,
-      config: config
-  }]
-
-  // Formatear la fecha para el radar (dd/mm hh:mm)
   const formatRadarDate = (isoString?: string) => {
     if (!isoString) return ""
     const d = new Date(isoString)
@@ -55,14 +67,14 @@ export function BotDetailView({ bot }: { bot: BotSummary }) {
           </div>
           <div className="w-px h-8 bg-white/10 hidden md:block"></div>
           <div className="text-right">
-            <span className="text-[10px] text-teal-500 block uppercase tracking-widest mb-0.5">PnL Total</span>
-            <span className={`text-lg font-bold ${bot.totalPnl >= 0 ? "text-green-400" : "text-red-400"}`}>
-              {bot.totalPnl >= 0 ? "+" : ""}{bot.totalPnl?.toFixed(2) || "0.00"}$
+            <span className="text-[10px] text-teal-500 block uppercase tracking-widest mb-0.5">PnL (Últ. Versión)</span>
+            <span className={`text-lg font-bold ${pnlToShow >= 0 ? "text-green-400" : "text-red-400"}`}>
+              {pnlToShow >= 0 ? "+" : ""}{pnlToShow.toFixed(2)}$
             </span>
           </div>
           <div className="w-px h-8 bg-white/10 hidden md:block"></div>
           <div className="text-center">
-            <span className="text-[10px] text-teal-500 block uppercase tracking-widest mb-0.5">ROI Bot</span>
+            <span className="text-[10px] text-teal-500 block uppercase tracking-widest mb-0.5">ROI (Base 1$)</span>
             <span className={`text-lg font-bold ${botRoi >= 0 ? "text-green-400" : "text-red-400"}`}>
               {botRoi >= 0 ? "+" : ""}{botRoi.toFixed(2)}%
             </span>
@@ -70,7 +82,7 @@ export function BotDetailView({ bot }: { bot: BotSummary }) {
           <div className="w-px h-8 bg-white/10 hidden md:block"></div>
           <div className="text-center">
             <span className="text-[10px] text-teal-500 block uppercase tracking-widest mb-0.5">Total Ops</span>
-            <span className="text-lg font-bold text-white">{bot.totalOperations}</span>
+            <span className="text-lg font-bold text-white">{opsToShow}</span>
           </div>
         </div>
       </div>
@@ -89,7 +101,6 @@ export function BotDetailView({ bot }: { bot: BotSummary }) {
               <span className="text-s font-bold text-cyan-400">{experimentName}</span>
             </div>
             <div>
-              {/* 👈 ACÁ CAMBIÉ text-teal-400 a text-white */}
               <p className="text-xs text-white leading-relaxed max-w-2xl">
                 {strategyDesc}
               </p>
@@ -104,7 +115,6 @@ export function BotDetailView({ bot }: { bot: BotSummary }) {
               <span className={`h-1.5 w-1.5 rounded-full ${trade ? (trade.estadoProteccion === 'PP' ? 'bg-green-400 animate-ping' : 'bg-cyan-400 animate-ping') : 'bg-teal-600'}`} />
               <span>RADAR EN VIVO</span>
             </h3>
-            {/* 👈 ACÁ AGREGUÉ LA FECHA CHIQUITITA dd/mm 00:00 */}
             {trade?.fechaInicio && (
               <span className="text-[9px] text-amber-500 font-bold tracking-widest">
                 {formatRadarDate(trade.fechaInicio)}
@@ -173,7 +183,8 @@ export function BotDetailView({ bot }: { bot: BotSummary }) {
         <div className="pt-4 flex-1 overflow-y-auto">
           {activeTab === "OPERATIONS" && <OperationsTable botId={bot.id} />}
           {activeTab === "MONTHLY" && <MonthlyCalendar botId={bot.id} />}
-          {activeTab === "CONFIG" && <BotVersionConfig botId={bot.id} botName={bot.name} />}
+          {/* Le pasamos el config de MongoDB por si la DB relacional aún no lo registró */}
+          {activeTab === "CONFIG" && <BotVersionConfig botId={bot.id} botName={bot.name} activeConfig={config} />}
         </div>
       </div>
       

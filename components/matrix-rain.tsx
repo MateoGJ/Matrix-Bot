@@ -29,6 +29,8 @@ export function MatrixRain() {
     function draw() {
       if (!ctx || !canvas) return
 
+      // Fondo tenue para dejar rastro
+      ctx.shadowBlur = 0
       ctx.fillStyle = "rgba(0, 0, 0, 0.04)"
       ctx.fillRect(0, 0, canvas.width, canvas.height)
 
@@ -36,7 +38,24 @@ export function MatrixRain() {
 
       for (let i = 0; i < drops.length; i++) {
         const text = symbolsArray[Math.floor(Math.random() * symbolsArray.length)]
-        ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.5 + 0.3})`
+        
+        // 🧬 Distribución: 80% Blanco, 10% Verde Neón, 10% Rojo Neón
+        const randColor = Math.random()
+        if (randColor < 0.8) {
+          ctx.shadowBlur = 0
+          ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.4 + 0.3})`
+        } else if (randColor < 0.9) {
+          // Verde Neón con Glow
+          ctx.fillStyle = `#00FF41`
+          ctx.shadowColor = `#00FF41`
+          ctx.shadowBlur = 15
+        } else {
+          // Rojo Neón con Glow
+          ctx.fillStyle = `#FF003C`
+          ctx.shadowColor = `#FF003C`
+          ctx.shadowBlur = 15
+        }
+
         ctx.fillText(text, i * fontSize, drops[i] * fontSize)
 
         if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
@@ -61,5 +80,5 @@ export function MatrixRain() {
     }
   }, [])
 
-  return <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none opacity-20" />
+  return <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none opacity-25" />
 }

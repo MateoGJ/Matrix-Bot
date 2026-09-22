@@ -277,35 +277,51 @@ export async function getBotStats(botId: BotId): Promise<Stats> {
 // 9. HISTORIAL DE VERSIONES DEL BOT
 // ==========================================
 export async function getBotVersionHistory(botId: string) {
-  // Al usar una columna nativa 'version', el GROUP BY es exacto y evita duplicados en React
-  const [rows] = await pool.query(`
-    SELECT
-      version,
-      MAX(fecha) AS fecha,
-      COUNT(*) AS operaciones,
-      COALESCE(SUM(pnl), 0) AS pnl,
-      COALESCE(SUM(CASE WHEN pnl >= 0 THEN 1 ELSE 0 END), 0) AS wins,
-      MAX(config_snapshot) AS config_str
-    FROM historial_operaciones
-    WHERE bot_id = ? AND version IS NOT NULL
-    GROUP BY version
-    ORDER BY MAX(fecha) DESC
-  `, [botId])
+  try {
+    const [rows] = await pool.query(`
+      SELECT
+        h1.version,
+        MAX(h1.fecha) AS fecha,
+        COUNT(*) AS operaciones,
+        COALESCE(SUM(h1.pnl), 0) AS pnl,
+        COALESCE(SUM(CASE WHEN h1.pnl >= 0 THEN 1 ELSE 0 END), 0) AS wins,
+        (SELECT config_snapshot 
+         FROM historial_operaciones h2 
+         WHERE h2.bot_id = h1.bot_id AND h2.version = h1.version 
+         AND config_snapshot IS NOT NULL AND config_snapshot != '{}' 
+         LIMIT 1) AS config_data
+      FROM historial_operaciones h1
+      WHERE h1.bot_id = ? AND h1.version IS NOT NULL
+      GROUP BY h1.version, h1.bot_id
+      ORDER BY MAX(h1.fecha) DESC
+    `, [botId])
 
-  return (rows as any[]).map(row => {
-    let parsedConfig = {}
-    try { parsedConfig = JSON.parse(row.config_str) } catch(e){}
+    return (rows as any[]).map(row => {
+      let parsedConfig = {}
+      
+      // 🧬 Parseo blindado: Si TiDB ya lo convirtió en objeto, lo tomamos directo.
+      if (row.config_data) {
+        if (typeof row.config_data === 'string') {
+          try { parsedConfig = JSON.parse(row.config_data) } catch (e) {}
+        } else if (typeof row.config_data === 'object') {
+          parsedConfig = row.config_data
+        }
+      }
 
-    const operaciones = Number(row.operaciones)
-    const wins = Number(row.wins)
+      const operaciones = Number(row.operaciones)
+      const wins = Number(row.wins)
 
-    return {
-      version: row.version || "Desconocida",
-      fecha: row.fecha ? new Date(row.fecha).toLocaleDateString("es-AR") : "-",
-      operaciones: operaciones,
-      winRate: operaciones > 0 ? (wins / operaciones) * 100 : 0,
-      pnl: Number(row.pnl),
-      config: parsedConfig
-    }
-  })
+      return {
+        version: row.version || "Desconocida",
+        fecha: row.fecha ? new Date(row.fecha).toLocaleDateString("es-AR") : "-",
+        operaciones: operaciones,
+        winRate: operaciones > 0 ? (wins / operaciones) * 100 : 0,
+        pnl: Number(row.pnl),
+        config: parsedConfig
+      }
+    })
+  } catch (error) {
+    console.error("Error historial versiones:", error)
+    return []
+  }
 }

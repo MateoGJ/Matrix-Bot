@@ -12,7 +12,13 @@ interface VersionHistory {
   config: Record<string, any>
 }
 
-export function BotVersionConfig({ botId, botName }: { botId: string, botName: string }) {
+interface BotVersionConfigProps {
+  botId: string
+  botName: string
+  activeConfig?: any 
+}
+
+export function BotVersionConfig({ botId, botName, activeConfig }: BotVersionConfigProps) {
   const [versions, setVersions] = useState<VersionHistory[]>([])
   const [selectedVersion, setSelectedVersion] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -22,7 +28,6 @@ export function BotVersionConfig({ botId, botName }: { botId: string, botName: s
     getBotVersionHistory(botId).then(data => {
       if (!mounted) return
       setVersions(data)
-      // La primera de la lista (ordenada por fecha DESC en MySQL) es siempre la ACTIVA
       setSelectedVersion(data[0]?.version)
       setLoading(false)
     })
@@ -30,6 +35,18 @@ export function BotVersionConfig({ botId, botName }: { botId: string, botName: s
   }, [botId])
 
   const currentData = versions.find(v => v.version === selectedVersion) || versions[0]
+  const isActiveVersion = versions.findIndex(v => v.version === selectedVersion) === 0
+
+  let displayConfig: any = currentData?.config || {}
+  
+  if (typeof displayConfig === 'string') {
+    try { displayConfig = JSON.parse(displayConfig) } catch (e) { displayConfig = {} }
+  }
+
+  // Si no hay historial pero es la versión activa, inyectamos la memoria viva (Mongo)
+  if ((!displayConfig || Object.keys(displayConfig).length === 0) && activeConfig && isActiveVersion) {
+    displayConfig = activeConfig
+  }
 
   if (loading) {
     return <div className="text-gray-500 font-mono text-sm p-5 animate-pulse">Sincronizando versiones con la base de datos...</div>
@@ -49,11 +66,11 @@ export function BotVersionConfig({ botId, botName }: { botId: string, botName: s
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
           {versions.map((v, index) => {
-            const isActive = index === 0 // La index 0 es la más reciente
+            const isActive = index === 0 
 
             return (
               <button
-                key={v.version}
+                key={`${v.version}-${index}`}
                 onClick={() => setSelectedVersion(v.version)}
                 className={`relative p-3 rounded-lg border text-left transition-all ${
                   selectedVersion === v.version
@@ -90,12 +107,19 @@ export function BotVersionConfig({ botId, botName }: { botId: string, botName: s
       </div>
 
       <div className="bg-black/60 border border-white/10 rounded-lg p-5">
-        <h3 className="text-white font-bold mb-3 flex items-center space-x-2">
-          <span>⚙️</span>
-          <span>CONFIGURACIÓN DEL SISTEMA (CONFIG JSON)</span>
+        <h3 className="text-white font-bold mb-3 flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <span>⚙️</span>
+            <span>CONFIGURACIÓN DEL SISTEMA (CONFIG JSON)</span>
+          </div>
+          <span className="text-teal-400 text-[10px] px-2 py-1 rounded bg-teal-400/10 border border-teal-400/20">
+            {selectedVersion}
+          </span>
         </h3>
         <pre className="bg-black/80 p-4 rounded border border-white/10 text-green-400 text-xs overflow-x-auto custom-scrollbar">
-          {JSON.stringify(currentData?.config || {}, null, 2)}
+          {Object.keys(displayConfig).length > 0 
+            ? JSON.stringify(displayConfig, null, 2)
+            : "// No hay datos de ADN registrados para esta versión específica."}
         </pre>
       </div>
     </div>
