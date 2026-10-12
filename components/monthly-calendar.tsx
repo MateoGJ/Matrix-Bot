@@ -5,6 +5,7 @@ import {
   getDailyPnl,
   getMonthlyStats,
   getBotStats,
+  getBotVersionHistory, // 👈 AGREGAMOS ESTO
   type BotId,
   type MonthlyStats,
   type Stats,
@@ -59,13 +60,25 @@ export function MonthlyCalendar({ botId }: { botId: BotId }) {
   const [monthlyStats, setMonthlyStats] = useState<MonthlyStats[]>([])
   const [botStats, setBotStats] = useState<Stats | null>(null)
   
+  // 🧬 ESTADOS DEL SELECTOR DE VERSIÓN
+  const [versions, setVersions] = useState<any[]>([])
+  const [selectedVersion, setSelectedVersion] = useState<string>("ALL")
+
   const [loadingDaily, setLoadingDaily] = useState(true)
   const [loadingGlobal, setLoadingGlobal] = useState(true)
 
-  // Prevenir Hydration Error
+  
+
+  // Prevenir Hydration Error y cargar versiones
   useEffect(() => {
     setIsMounted(true)
-  }, [])
+    getBotVersionHistory(botId).then(data => {
+      setVersions(data)
+      if (data.length > 0) {
+        setSelectedVersion(data[0].version) // 👈 Empieza siempre en la última versión
+      }
+    })
+  }, [botId])
 
   // Carga diaria
   useEffect(() => {
@@ -73,7 +86,9 @@ export function MonthlyCalendar({ botId }: { botId: BotId }) {
     const loadDailyPnl = async () => {
       setLoadingDaily(true)
       try {
-        const data = await getDailyPnl(botId, currentYear, currentMonth)
+        // Pasamos la versión por si en el backend decidís filtrar la DB también
+        // @ts-ignore
+        const data = await getDailyPnl(botId, currentYear, currentMonth, selectedVersion !== "ALL" ? selectedVersion : undefined)
         setDailyPnl(data)
       } catch (error) {
         console.error("Error loading daily PNL:", error)
@@ -83,7 +98,7 @@ export function MonthlyCalendar({ botId }: { botId: BotId }) {
       }
     }
     loadDailyPnl()
-  }, [botId, currentMonth, currentYear, isMounted])
+  }, [botId, currentMonth, currentYear, isMounted, selectedVersion])
 
   // Carga global
   useEffect(() => {
@@ -92,8 +107,10 @@ export function MonthlyCalendar({ botId }: { botId: BotId }) {
       setLoadingGlobal(true)
       try {
         const [mStats, bStats] = await Promise.all([
-          getMonthlyStats(botId),
-          getBotStats(botId)
+          // @ts-ignore
+          getMonthlyStats(botId, selectedVersion !== "ALL" ? selectedVersion : undefined),
+          // @ts-ignore
+          getBotStats(botId, selectedVersion !== "ALL" ? selectedVersion : undefined)
         ])
         setMonthlyStats(mStats)
         setBotStats(bStats)
@@ -104,16 +121,20 @@ export function MonthlyCalendar({ botId }: { botId: BotId }) {
       }
     }
     loadGlobalStats()
-  }, [botId, isMounted])
+  }, [botId, isMounted, selectedVersion])
 
   // Cálculos de calendario
   const daysInMonth = new Date(currentYear, currentMonth, 0).getDate()
   const firstDayOfMonth = new Date(currentYear, currentMonth - 1, 1).getDay()
 
-  // Métricas derivadas únicamente de datos reales de TiDB.
-  const avgPnlPerOperation = botStats && botStats.totalOperations > 0
-    ? botStats.totalPnl / botStats.totalOperations
-    : 0
+  // 🧬 CÁLCULOS DINÁMICOS SEGÚN LA VERSIÓN SELECCIONADA
+  const activeVersionData = versions.find(v => v.version === selectedVersion)
+  
+  const pnlToShow = selectedVersion === "ALL" ? (botStats?.totalPnl || 0) : (activeVersionData?.pnl || 0)
+  const opsToShow = selectedVersion === "ALL" ? (botStats?.totalOperations || 0) : (activeVersionData?.operaciones || 0)
+  const winRateToShow = selectedVersion === "ALL" ? (botStats?.winRate || 0) : (activeVersionData?.winRate || 0)
+  const roiToShow = pnlToShow * 100 // ROI Base $1
+  const avgPnlPerOperation = opsToShow > 0 ? pnlToShow / opsToShow : 0
 
   // Cálculo de la Equity Curve
   const chartData = useMemo(() => {
@@ -204,8 +225,25 @@ export function MonthlyCalendar({ botId }: { botId: BotId }) {
                 </span>
               </h2>
 
-              <div className="text-xs text-gray-500 font-mono uppercase tracking-widest">
-                BOT: <span className="text-white">{botId}</span>
+              <div className="flex items-center gap-6">
+                {/* 🧬 SELECTOR DE VERSIÓN */}
+                <div className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-lg border border-white/10">
+                  <span className="text-teal-500 font-bold uppercase tracking-widest text-[10px]">Versión</span>
+                  <select 
+                    value={selectedVersion} 
+                    onChange={(e) => setSelectedVersion(e.target.value)}
+                    className="bg-transparent border-none text-white font-bold outline-none cursor-pointer text-sm"
+                  >
+                    {versions.map(v => (
+                      <option key={v.version} value={v.version} className="bg-gray-900">{v.version}</option>
+                    ))}
+                    <option value="ALL" className="bg-gray-900">GLOBAL (Todas)</option>
+                  </select>
+                </div>
+
+                <div className="text-xs text-gray-500 font-mono uppercase tracking-widest hidden md:block">
+                  BOT: <span className="text-white">{botId}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -336,7 +374,9 @@ export function MonthlyCalendar({ botId }: { botId: BotId }) {
 
           {/* BOTTOM STATS CARDS */}
           <div className="border-t border-white/20 p-6 bg-black/40">
-            <h3 className="text-sm font-mono text-gray-400 mb-4 tracking-widest uppercase">Estadísticas Globales del Bot</h3>
+            <h3 className="text-sm font-mono text-gray-400 mb-4 tracking-widest uppercase">
+              Estadísticas {selectedVersion === "ALL" ? "Globales (Históricas)" : `Específicas de la Versión`}
+            </h3>
             
             {loadingGlobal || !botStats ? (
               <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 animate-pulse">
@@ -345,12 +385,21 @@ export function MonthlyCalendar({ botId }: { botId: BotId }) {
             ) : (
               <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 text-center">
                 
-                {/* PNL Total */}
+                {/* PNL */}
                 <div className="bg-white/5 border border-white/10 rounded-lg p-4 relative overflow-hidden group">
-                  <div className={`absolute inset-0 opacity-10 transition-opacity group-hover:opacity-20 ${botStats.totalPnl >= 0 ? 'bg-green-500' : 'bg-red-500'}`} />
-                  <p className="text-gray-400 font-mono text-sm">PNL Total</p>
-                  <p className={`text-2xl font-bold font-mono mt-2 ${botStats.totalPnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                    {botStats.totalPnl >= 0 ? '+' : ''}{botStats.totalPnl.toFixed(2)}
+                  <div className={`absolute inset-0 opacity-10 transition-opacity group-hover:opacity-20 ${pnlToShow >= 0 ? 'bg-green-500' : 'bg-red-500'}`} />
+                  <p className="text-gray-400 font-mono text-sm">PNL Neto</p>
+                  <p className={`text-2xl font-bold font-mono mt-2 ${pnlToShow >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    {pnlToShow >= 0 ? '+' : ''}{pnlToShow.toFixed(2)}
+                  </p>
+                </div>
+
+                {/* ROI */}
+                <div className="bg-white/5 border border-white/10 rounded-lg p-4 relative overflow-hidden group">
+                  <div className={`absolute inset-0 opacity-10 transition-opacity group-hover:opacity-20 ${roiToShow >= 0 ? 'bg-purple-500' : 'bg-red-500'}`} />
+                  <p className="text-gray-400 font-mono text-sm">ROI (Base 1$)</p>
+                  <p className={`text-2xl font-bold font-mono mt-2 ${roiToShow >= 0 ? 'text-purple-400' : 'text-red-400'}`}>
+                    {roiToShow >= 0 ? '+' : ''}{roiToShow.toFixed(2)}%
                   </p>
                 </div>
 
@@ -363,30 +412,21 @@ export function MonthlyCalendar({ botId }: { botId: BotId }) {
                   </p>
                 </div>
 
-                {/* Meses registrados */}
-                <div className="bg-white/5 border border-white/10 rounded-lg p-4 relative overflow-hidden group">
-                  <div className="absolute inset-0 opacity-10 transition-opacity group-hover:opacity-20 bg-blue-500" />
-                  <p className="text-gray-400 font-mono text-sm">Meses Registrados</p>
-                  <p className="text-2xl font-bold font-mono mt-2 text-blue-400">
-                    {monthlyStats.length}
-                  </p>
-                </div>
-
                 {/* Win Rate */}
                 <div className="bg-white/5 border border-white/10 rounded-lg p-4 relative overflow-hidden group">
-                  <div className={`absolute inset-0 opacity-10 transition-opacity group-hover:opacity-20 ${botStats.winRate >= 50 ? 'bg-emerald-500' : 'bg-orange-500'}`} />
+                  <div className={`absolute inset-0 opacity-10 transition-opacity group-hover:opacity-20 ${winRateToShow >= 50 ? 'bg-emerald-500' : 'bg-orange-500'}`} />
                   <p className="text-gray-400 font-mono text-sm">Win Rate</p>
-                  <p className={`text-2xl font-bold font-mono mt-2 ${botStats.winRate >= 50 ? 'text-emerald-400' : 'text-orange-400'}`}>
-                    {botStats.winRate.toFixed(1)}%
+                  <p className={`text-2xl font-bold font-mono mt-2 ${winRateToShow >= 50 ? 'text-emerald-400' : 'text-orange-400'}`}>
+                    {winRateToShow.toFixed(1)}%
                   </p>
                 </div>
 
                 {/* Total Ops */}
                 <div className="bg-white/5 border border-white/10 rounded-lg p-4 relative overflow-hidden group">
-                  <div className="absolute inset-0 opacity-10 bg-purple-500 transition-opacity group-hover:opacity-20" />
+                  <div className="absolute inset-0 opacity-10 bg-blue-500 transition-opacity group-hover:opacity-20" />
                   <p className="text-gray-400 font-mono text-sm">Total Operaciones</p>
-                  <p className="text-2xl font-bold font-mono mt-2 text-purple-400">
-                    {botStats.totalOperations}
+                  <p className="text-2xl font-bold font-mono mt-2 text-blue-400">
+                    {opsToShow}
                   </p>
                 </div>
 
@@ -451,7 +491,6 @@ export function MonthlyCalendar({ botId }: { botId: BotId }) {
                       opacity={0.8} 
                     />
                     
-                    {/* 🔥 ACÁ ESTÁ LA CLAVE: El color frena en el 1$ */}
                     <Area
                       type="monotone"
                       dataKey="equity"

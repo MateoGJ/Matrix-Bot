@@ -88,10 +88,16 @@ export function BotVersionConfig({ botId, botName, activeConfig }: BotVersionCon
                   <span className="font-bold text-green-400">{v.version}</span>
                   <span className="text-[10px] text-gray-500">{v.fecha}</span>
                 </div>
-                <div className="text-xs space-y-1">
+                <div className="text-xs space-y-1 mt-2">
                   <div className="flex justify-between text-gray-400">
                     <span>WinRate:</span>
                     <span className="text-white">{v.winRate.toFixed(1)}%</span>
+                  </div>
+                  <div className="flex justify-between text-gray-400">
+                    <span>ROI (1$):</span>
+                    <span className={v.pnl >= 0 ? "text-green-400 font-bold" : "text-red-400 font-bold"}>
+                      {v.pnl >= 0 ? "+" : ""}{(v.pnl * 100).toFixed(2)}%
+                    </span>
                   </div>
                   <div className="flex justify-between text-gray-400">
                     <span>PnL:</span>
