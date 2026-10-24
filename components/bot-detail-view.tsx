@@ -46,7 +46,7 @@ export function BotDetailView({ bot }: { bot: BotSummary }) {
   }
 
   return (
-    <div className="p-4 space-y-6 font-mono h-full flex flex-col">
+    <div className="p-4 space-y-6 font-mono h-full flex flex-col bg-black/50">
       
       {/* HEADER DEL BOT */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 pb-6 border-b border-white/5 shrink-0">

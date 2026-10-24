@@ -9,16 +9,13 @@ interface BotListSidebarProps {
   onSelectBot: (id: string) => void
 }
 
-type SortOption = "ACTIVE_TRADE" | "PNL_DESC" | "ROI_DESC" | "SL_DESC" | "ONLINE_ONLY" | "RECENT"
+type TabMode = "LIVE" | "ARCHIVE"
 
 export function BotListSidebar({ bots, selectedBotId, onSelectBot }: BotListSidebarProps) {
   const [search, setSearch] = useState("")
-  const [sortBy, setSortBy] = useState<SortOption>("ACTIVE_TRADE")
-  
-  // 🧬 Memoria del PnL de la ÚLTIMA versión
+  const [tab, setTab] = useState<TabMode>("LIVE")
   const [latestPnlData, setLatestPnlData] = useState<Record<string, number>>({})
 
-  // Hash para recargar solo cuando hay operaciones nuevas
   const opsHash = (bots || []).map(b => b.totalOperations).join(",")
 
   useEffect(() => {
@@ -32,7 +29,7 @@ export function BotListSidebar({ bots, selectedBotId, onSelectBot }: BotListSide
           try {
             const history = await getBotVersionHistory(bot.id)
             if (history && history.length > 0) {
-              newData[bot.id] = history[0].pnl // Extrae la v. más reciente
+              newData[bot.id] = history[0].pnl 
             } else {
               newData[bot.id] = bot.totalPnl
             }
@@ -49,141 +46,118 @@ export function BotListSidebar({ bots, selectedBotId, onSelectBot }: BotListSide
     return () => { mounted = false }
   }, [opsHash])
 
-  const processedBots = [...(bots || [])]
+  // Filtramos por pestaña y búsqueda
+  const processedBots = (bots || [])
     .filter((b) => b.name.toLowerCase().includes(search.toLowerCase()))
-    .filter((b) => sortBy === "ONLINE_ONLY" ? b.status === "ONLINE" : true)
+    .filter((b) => tab === "LIVE" ? b.status === "ONLINE" : b.status === "OFFLINE")
     .sort((a, b) => {
+      const aTrade = a.activeTrade ? 1 : 0
+      const bTrade = b.activeTrade ? 1 : 0
+      if (bTrade !== aTrade) return bTrade - aTrade
+      
       const aPnl = latestPnlData[a.id] ?? a.totalPnl
       const bPnl = latestPnlData[b.id] ?? b.totalPnl
-
-      if (sortBy === "ACTIVE_TRADE") {
-        const aTrade = a.activeTrade ? 1 : 0
-        const bTrade = b.activeTrade ? 1 : 0
-        if (bTrade !== aTrade) return bTrade - aTrade
-        return bPnl - aPnl
-      }
-      if (sortBy === "PNL_DESC") return bPnl - aPnl
-      if (sortBy === "ROI_DESC") {
-        const aRoi = aPnl * 100
-        const bRoi = bPnl * 100
-        return bRoi - aRoi
-      }
-      if (sortBy === "SL_DESC") {
-        const aSl = a.rawConfig?.sl_porcentaje || 0
-        const bSl = b.rawConfig?.sl_porcentaje || 0
-        return bSl - aSl
-      }
-      if (sortBy === "RECENT") {
-        const aTime = a.activeTrade?.fechaInicio ? new Date(a.activeTrade.fechaInicio).getTime() : 0
-        const bTime = b.activeTrade?.fechaInicio ? new Date(b.activeTrade.fechaInicio).getTime() : 0
-        if (bTime !== aTime) return bTime - aTime
-        return bPnl - aPnl
-      }
-      return a.name.localeCompare(b.name)
+      return bPnl - aPnl
     })
 
   return (
-    <div className="flex flex-col h-full w-full bg-black/70 border-r border-white/5 font-mono text-sm relative">
+    <div className="flex flex-col h-full w-full bg-black border-r border-white/5 font-mono relative select-none">
       
-      {/* HEADER SIDEBAR */}
-      <div className="sticky top-0 z-20 bg-black/95 backdrop-blur-md p-4 border-b border-white/35 space-y-4 shrink-0 shadow-xl">
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-gray-500 font-bold uppercase tracking-wider">
-            NODOS ACTIVOS ({bots?.length || 0})
-          </span>
-          <span className="flex h-2 w-2 relative">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-          </span>
+      {/* HEADER TERMINAL */}
+      <div className="sticky top-0 z-20 bg-black/95 backdrop-blur-md p-3 border-b border-white/10 shrink-0 shadow-xl">
+        <div className="flex w-full mb-3 gap-2">
+          <button 
+            onClick={() => setTab("LIVE")} 
+            className={`flex-1 text-xs font-bold tracking-widest uppercase py-2 border transition-colors rounded ${tab === "LIVE" ? "bg-green-500/20 text-green-400 border-green-500/30" : "bg-white/5 text-zinc-600 border-white/5 hover:text-zinc-300 hover:bg-white/10"}`}
+          >
+            [ LIVE ]
+          </button>
+          <button 
+            onClick={() => setTab("ARCHIVE")} 
+            className={`flex-1 text-xs font-bold tracking-widest uppercase py-2 border transition-colors rounded ${tab === "ARCHIVE" ? "bg-zinc-800 text-white border-zinc-600" : "bg-white/5 text-zinc-600 border-white/5 hover:text-zinc-300 hover:bg-white/10"}`}
+          >
+            [ ARCHIVO ]
+          </button>
         </div>
         <input
           type="text"
-          placeholder="Buscar bot..."
+          placeholder="> Rastrear nodo..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full bg-transparent border-b border-white/20 px-2 py-1 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-green-500 transition-colors"
+          className="w-full bg-zinc-900/80 border border-white/10 px-3 py-2 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-green-500 rounded transition-colors"
         />
-        
-        {/* FILTROS RÁPIDOS */}
-        <div className="flex gap-2 overflow-x-auto custom-scrollbar pb-2 pt-1 -mx-2 px-2">
-          <button onClick={() => setSortBy("ACTIVE_TRADE")} className={`shrink-0 text-[10px] px-3 py-1.5 rounded font-bold tracking-widest uppercase transition-colors border ${sortBy === "ACTIVE_TRADE" ? "bg-green-500/20 text-green-400 border-green-500/30" : "bg-white/5 text-gray-500 border-white/5 hover:bg-white/10"}`}>
-            All
-          </button>
-          <button onClick={() => setSortBy("ROI_DESC")} className={`shrink-0 text-[10px] px-3 py-1.5 rounded font-bold tracking-widest uppercase transition-colors border ${sortBy === "ROI_DESC" ? "bg-purple-500/20 text-purple-400 border-purple-500/30" : "bg-white/5 text-gray-500 border-white/5 hover:bg-white/10"}`}>
-            ROI
-          </button>
-          <button onClick={() => setSortBy("SL_DESC")} className={`shrink-0 text-[10px] px-3 py-1.5 rounded font-bold tracking-widest uppercase transition-colors border ${sortBy === "SL_DESC" ? "bg-red-500/20 text-red-400 border-red-500/30" : "bg-white/5 text-gray-500 border-white/5 hover:bg-white/10"}`}>
-            SL
-          </button>
-          <button onClick={() => setSortBy("RECENT")} className={`shrink-0 text-[10px] px-3 py-1.5 rounded font-bold tracking-widest uppercase transition-colors border ${sortBy === "RECENT" ? "bg-cyan-500/20 text-cyan-400 border-cyan-500/30" : "bg-white/5 text-gray-500 border-white/5 hover:bg-white/10"}`}>
-            Lasts
-          </button>
-          <button onClick={() => setSortBy("ONLINE_ONLY")} className={`shrink-0 text-[10px] px-3 py-1.5 rounded font-bold tracking-widest uppercase transition-colors border ${sortBy === "ONLINE_ONLY" ? "bg-amber-500/20 text-amber-400 border-amber-500/30" : "bg-white/5 text-gray-500 border-white/5 hover:bg-white/10"}`}>
-            On
-          </button>
-        </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto custom-scrollbar">
+      {/* LISTA DE BOTS */}
+      <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-2">
         {processedBots.length === 0 ? (
-          <div className="p-4 text-center text-xs text-gray-600">Ningún bot encontrado</div>
+          <div className="p-4 text-center text-xs text-zinc-700 uppercase tracking-widest mt-4">Sin registros</div>
         ) : (
           processedBots.map((bot) => {
             const isSelected = bot.id === selectedBotId
             const trade = bot.activeTrade
             
-            // Datos estables para la vista calculados de la última versión
             const botPnl = latestPnlData[bot.id] ?? bot.totalPnl
-            const botRoi = botPnl * 100 // ROI base $1
+            const botRoi = botPnl * 100 
 
             return (
               <button
                 key={bot.id}
                 onClick={() => onSelectBot(bot.id)}
-                className={`w-full text-left p-4 border-b border-white/35 transition-colors relative block ${
-                  isSelected ? "bg-zinc-900/40" : "hover:bg-zinc-900/20"
+                className={`w-full text-left p-3 border transition-all duration-200 rounded-lg flex flex-col gap-2 ${
+                  isSelected 
+                    ? "bg-zinc-900 border-green-500/50 shadow-[0_0_15px_rgba(34,197,94,0.1)]" 
+                    : "bg-black hover:bg-zinc-900/40 border-white/5"
                 }`}
               >
-                {isSelected && <div className="absolute left-0 top-0 bottom-0 w-1 bg-green-500" />}
-                
-                <div className="flex flex-col space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <span className={`h-1.5 w-1.5 rounded-full ${bot.status === "ONLINE" ? "bg-green-500" : "bg-red-500"}`} />
-                    <span className={`font-bold text-m tracking-wide ${isSelected ? "text-white" : "text-gray-300"}`}>
+                {/* FILA 1: BOT DATA (Balance y ROI Global) */}
+                <div className="flex items-center justify-between w-full pb-2 border-b border-white/5">
+                  <div className="flex items-center gap-2 truncate">
+                    <span className={`h-2 w-2 rounded-full shrink-0 ${bot.status === "ONLINE" ? (trade ? "bg-cyan-400 animate-pulse shadow-[0_0_8px_rgba(34,211,238,0.6)]" : "bg-green-500") : "bg-red-900"}`} />
+                    <span className={`text-sm font-black tracking-wide truncate ${isSelected ? "text-white" : "text-zinc-300"}`}>
                       {bot.name}
                     </span>
                   </div>
                   
-                  <div className="flex items-center gap-2 text-[12px] font-bold text-gray-500 tracking-wider">
-                    <span className="pr-5">BAL: <span className="text-white">${bot.balance?.toFixed(2)}</span></span>
-                    <span className="pr-5">ROI: <span className={botRoi >= 0 ? "text-green-400" : "text-red-400"}>{botRoi >= 0 ? "+" : ""}{botRoi.toFixed(1)}%</span></span>
-                    <span className="pr-5">PNL: <span className={botPnl >= 0 ? "text-green-400" : "text-red-400"}>{botPnl >= 0 ? "+" : ""}{botPnl?.toFixed(2)}$</span></span>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest flex items-center gap-1">
+                      BAL: <span className="text-white">${bot.balance?.toFixed(2) || "0.00"}</span>
+                    </span>
+                    <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest flex items-center gap-1">
+                      Bot: <span className={`text-sm font-black ${botRoi >= 0 ? "text-green-500" : "text-red-500"}`}>
+                        {botRoi >= 0 ? "+" : ""}{botRoi.toFixed(1)}%
+                      </span>
+                    </span>
                   </div>
-
-                  {trade && (
-                    <div className="mt-1 flex items-center justify-between text-[12px] text-gray-400 font-bold bg-white/5 py-1.5 px-2 rounded">
-                      <div className="flex gap-2">
-                        <span className={trade.tipo === "BUY" ? "text-green-400" : "text-red-400"}>{trade.tipo}</span>
-                        <span>  |  </span>
-                        <span className="text-teal-400">${trade.margen?.toFixed(2)}</span>
-                      </div>
-                      <div className="flex gap-2 text-right">
-                        <span>  |  </span>
-                        <span className={trade.pnlPct >= 0 ? "text-green-400" : "text-red-400"}>
-                          {trade.pnlPct >= 0 ? "+" : ""}{trade.pnlPct?.toFixed(2)}%
-                        </span>
-                        <span>  |  </span>
-                        <span className={trade.pnlActual >= 0 ? "text-green-400" : "text-red-400"}>
-                          {trade.pnlActual >= 0 ? "+" : ""}{trade.pnlActual?.toFixed(2)}$
-                        </span>
-                        <span>  |  </span>
-                        <span className={trade.estadoProteccion === "PP" ? "text-green-500" : "text-red-500"}>
-                          {trade.estadoProteccion}: {trade.estadoProteccion === "PP" ? `+${trade.roiProtegido}%` : `-${trade.slInicial}%`}
-                        </span>
-                      </div>
-                    </div>
-                  )}
                 </div>
+
+                {/* FILA 2: TRADE DATA O MONITOREO */}
+                {trade ? (
+                  <div className="flex items-center justify-between w-full pt-1">
+                    <div className="flex items-center gap-2 text-xs font-bold truncate">
+                      <span className={trade.tipo === "BUY" ? "text-green-400" : "text-red-400"}>{trade.tipo}</span>
+                      <span className="text-white">{trade.symbol}</span>
+                      {trade.apalancamiento && (
+                        <span className="text-[9px] bg-lime-500/20 text-lime-400 border border-lime-500/30 px-1.5 py-0.5 rounded">
+                          {trade.apalancamiento}X
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 bg-cyan-950/30 px-2 py-1 rounded border border-cyan-900/30 shrink-0">
+                      <span className="text-[10px] text-cyan-600 uppercase tracking-widest font-bold">Op:</span>
+                      <span className={`text-xs font-black ${trade.pnlPct >= 0 ? "text-cyan-400" : "text-red-400"}`}>
+                        {trade.pnlPct >= 0 ? "+" : ""}{trade.pnlPct.toFixed(2)}%
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-start w-full pt-1">
+                    <span className={`text-[10px] font-bold tracking-widest uppercase flex items-center gap-2 ${bot.status === "ONLINE" ? "text-zinc-500" : "text-red-900/50"}`}>
+                       {bot.status === "ONLINE" && <span className="h-1 w-1 bg-zinc-500 rounded-full animate-ping"></span>}
+                       {bot.status === "ONLINE" ? "Monitoreando..." : "Apagado"}
+                    </span>
+                  </div>
+                )}
               </button>
             )
           })
