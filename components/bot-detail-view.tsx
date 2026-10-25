@@ -61,13 +61,13 @@ export function BotDetailView({ bot }: { bot: BotSummary }) {
         </div>
 
         <div className="flex flex-wrap items-center gap-6">
-          <div className="text-right">
+          <div className="text-center">
             <span className="text-[10px] text-teal-500 block uppercase tracking-widest mb-0.5">Balance</span>
             <span className="text-lg font-bold text-white">${bot.balance?.toFixed(2) || "0.00"}</span>
           </div>
           <div className="w-px h-8 bg-white/10 hidden md:block"></div>
-          <div className="text-right">
-            <span className="text-[10px] text-teal-500 block uppercase tracking-widest mb-0.5">PnL (Últ. Versión)</span>
+          <div className="text-center">
+            <span className="text-[10px] text-teal-500 block uppercase tracking-widest mb-0.5">PnL</span>
             <span className={`text-lg font-bold ${pnlToShow >= 0 ? "text-green-400" : "text-red-400"}`}>
               {pnlToShow >= 0 ? "+" : ""}{pnlToShow.toFixed(2)}$
             </span>
@@ -81,9 +81,10 @@ export function BotDetailView({ bot }: { bot: BotSummary }) {
           </div>
           <div className="w-px h-8 bg-white/10 hidden md:block"></div>
           <div className="text-center">
-            <span className="text-[10px] text-teal-500 block uppercase tracking-widest mb-0.5">Total Ops</span>
+            <span className="text-[10px] text-teal-500 block uppercase tracking-widest mb-0.5">Ops</span>
             <span className="text-lg font-bold text-white">{opsToShow}</span>
           </div>
+          <div className="w-px h-8 hidden md:block"></div>
         </div>
       </div>
 
